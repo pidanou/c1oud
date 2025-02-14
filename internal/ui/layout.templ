@@ -1,0 +1,24 @@
+package ui
+
+templ Layout() {
+  <html>
+
+<head>
+  <script src="/static/htmx.min.js"></script>
+  <script>htmx.config.useTemplateFragments = true</script>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <style>
+    body {
+      font-family: helvetica, sans-serif
+    }
+  </style>
+</head>
+
+<body>
+  <div id="main" class="w-screen h-screen flex flex-col">
+    { children... }
+  </div>
+</body>
+
+</html>
+  }
