@@ -5,7 +5,7 @@ import (
 
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
-	"github.com/pidanou/c1oud/internal/ui"
+	"github.com/pidanou/c1-core/internal/ui"
 )
 
 func Render(ctx echo.Context, statusCode int, t templ.Component) error {

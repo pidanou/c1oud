@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/labstack/echo/v4"
-	"github.com/pidanou/c1oud/internal/ui"
+	"github.com/pidanou/c1-core/internal/ui"
 )
 
 func getFileSystem(useOS bool, embededFiles embed.FS) http.FileSystem {
