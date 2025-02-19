@@ -20,5 +20,5 @@ func Render(ctx echo.Context, statusCode int, t templ.Component) error {
 }
 
 func GetHome(c echo.Context) error {
-	return Render(c, http.StatusOK, ui.Home("t"))
+	return Render(c, http.StatusOK, ui.Home("World"))
 }

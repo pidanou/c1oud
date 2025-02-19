@@ -1,13 +1,14 @@
 GO_CMD = go
+WGO_CMD = wgo
 TEMPL_CMD = templ
 WEBAPP_PATH = cmd/webapp/main.go
-OUTPUT_BINARY = c1oud
+OUTPUT_BINARY = c1
 
 .PHONY: run-webapp run-templ run build-webapp
 
-run-webapp:
+run-webapp: 
 	@echo "Running webapp in live mode..."
-	@$(GO_CMD) run $(WEBAPP_PATH) live
+	@export $$(grep -v '^#' .env | xargs) && $(WGO_CMD) run $(WEBAPP_PATH)
 
 run-templ:
 	@echo "Running templ in watch mode..."
@@ -15,8 +16,9 @@ run-templ:
 
 run:
 	@echo "Running both templ and webapp concurrently..."
-	@$(TEMPL_CMD) generate --watch &
-	@$(GO_CMD) run $(WEBAPP_PATH) live
+	@(export $$(grep -v '^#' .env | xargs) && \
+	  $(TEMPL_CMD) generate --watch & \
+	  $(WGO_CMD) run $(WEBAPP_PATH))
 
 build-webapp:
 	@echo "Generating templates and building webapp..."

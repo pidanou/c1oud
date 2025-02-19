@@ -1,0 +1,29 @@
+syntax = "proto3";
+package proto;
+option go_package = "./proto";
+
+message Empty {}
+
+message DataObject {
+    string remote_id = 1;
+    string resource_name = 2;
+    string uri = 3;
+    map<string, string> metadata = 4;
+  }
+
+message SyncRequest {
+    string options = 1;
+    uint32 callback_handler_server = 2;
+}
+
+message SyncResponse {
+    repeated DataObject response = 1;
+}
+
+service Connector {
+    rpc Sync(SyncRequest) returns (Empty);
+}
+
+service CallbackHandler {
+    rpc Callback(SyncResponse) returns (Empty);
+}

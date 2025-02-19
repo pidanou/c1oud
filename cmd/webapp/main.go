@@ -1,59 +1,37 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
-	"os/exec"
+	"path/filepath"
 
-	hclog "github.com/hashicorp/go-hclog"
-	"github.com/hashicorp/go-plugin"
-	"github.com/pidanou/c1-core/pkg/plugins"
+	"github.com/jmoiron/sqlx"
+	"github.com/pidanou/c1-core/internal/constants"
+	"github.com/pidanou/c1-core/internal/pluginmanager"
+	"github.com/pidanou/c1-core/internal/repositories"
+	"github.com/pidanou/c1-core/internal/server"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-var handshakeConfig = plugin.HandshakeConfig{
-	ProtocolVersion:  1,
-	MagicCookieKey:   "BASIC_PLUGIN",
-	MagicCookieValue: "hello",
-}
-
-// pluginMap is the map of plugins we can dispense.
-var pluginMap = map[string]plugin.Plugin{
-	"connector": &plugins.GreeterPlugin{},
-}
-
 func main() {
-
-	logger := hclog.New(&hclog.LoggerOptions{
-		Name:   "plugin",
-		Output: os.Stdout,
-		Level:  hclog.Debug,
-	})
-
-	client := plugin.NewClient(&plugin.ClientConfig{
-		HandshakeConfig: handshakeConfig,
-		Plugins:         pluginMap,
-		Cmd:             exec.Command("./plugins/s3/s3"),
-		Logger:          logger,
-	})
-	defer client.Kill()
-
-	// Connect via RPC
-	rpcClient, err := client.Client()
+	dirname, err := os.UserHomeDir()
+	path := filepath.Join(dirname, ".c1")
+	err = os.MkdirAll(path, 0755)
 	if err != nil {
 		log.Fatal(err)
 	}
+	constants.Envs["C1_DIR"] = path
 
-	// Request the plugin
-	raw, err := rpcClient.Dispense("connector")
+	db, err := sqlx.Open("pgx", os.Getenv("C1_POSTGRES_DSN"))
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer db.Close()
 
-	// We should have a Greeter now! This feels like a normal interface
-	// implementation but is in fact over an RPC connection.
-	greeter := raw.(plugins.Greeter)
-	fmt.Println(greeter.Greet("Charles"))
+	repo := repositories.NewPostgresRepository(db)
+	pluginManager := pluginmanager.NewPluginManager(repo)
 
-	// server.Start()
+	app := &server.Server{PluginManager: pluginManager, DB: db}
+	app.Start()
 }

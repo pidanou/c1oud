@@ -27,3 +27,6 @@ go.work.sum
 # templ 
 *_templ.go
 *_templ.txt
+
+# temp plugins
+temp/*
