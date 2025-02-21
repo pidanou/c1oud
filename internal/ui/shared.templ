@@ -1,0 +1,75 @@
+package ui
+
+templ spinner(size int, id string, class string) {
+	<style>
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+  </style>
+	<article id={ id } class={ class } aria-busy="true" style="background: none; border: 0; margin:0; padding:0"></article>
+}
+
+templ Toast() {
+	<style>
+.toaster {
+    position: fixed;
+    display: block;
+    z-index: 999;
+    bottom: 0;
+    right: 0;
+    margin-right: 1rem; 
+    margin-bottom: 1rem; 
+}
+
+.toaster > * + * {
+    margin-top: 1rem;
+}
+
+.toaster-content {
+  position: relative;
+    border: 1px solid; 
+    border-radius: 0.5rem; 
+    padding: 1.75rem; 
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  </style>
+	<div
+		x-data="toast"
+		x-init="globalInit($el)"
+	>
+		<template x-teleport="body">
+			<div
+				class="toaster"
+				@add-toast.window="add"
+			>
+				<template x-for="toast in toasts" :key="toast.id">
+					<div
+						:id="toast.id"
+						x-init="toastInit($el)"
+						class="toaster-content"
+					>
+						<template x-if="toast.type === 'info'">
+							<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-info text-info"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
+						</template>
+						<template x-if="toast.type === 'warning'">
+							<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-triangle-alert text-warning"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg>
+						</template>
+						<p style="margin-bottom:0" x-text="toast.message"></p>
+						<button style="width: min-content; padding: 0.25rem; border-radius: 100%" @click="remove(toast.id)" class="toaster-close">
+							<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x text-close hover:text-black"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+						</button>
+					</div>
+				</template>
+			</div>
+		</template>
+	</div>
+	<script type="text/javascript" src="/static/toast.js"></script>
+}

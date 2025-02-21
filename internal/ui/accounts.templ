@@ -1,0 +1,111 @@
+package ui
+
+import (
+	"fmt"
+	"github.com/pidanou/c1-core/pkg/plugin"
+)
+
+templ AccountsPage(accounts []plugin.Account) {
+	@Layout("accounts") {
+		<div style="display: flex; flex-direction: column; gap: 1rem">
+			<a role="button" class="contrast" href="/account/new" style="display:flex; gap: 1rem; width: max-content; align-items:center;margin-left:auto">
+				<svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M450-483q26-30 40-66.12 14-36.12 14-74.88 0-38.41-14-74.21Q476-734 450-765q8-2 15-2.5t15-.5q60 0 102 42t42 102q0 60-42 102t-102 42q-8 0-15.5-.5T450-483Zm198 291v-92q0-41-19-76.5T576-421q68 16 130 44t62 93v92H648Zm132-240v-84h-84v-72h84v-84h72v84h84v72h-84v84h-72Zm-492-48q-60 0-102-42t-42-102q0-60 42-102t102-42q60 0 102 42t42 102q0 60-42 102t-102 42ZM0-192v-92q0-25.41 12.5-46.7Q25-352 47-366q54-34 115.54-50 61.54-16 125-16T412-415q61 17 117 49 21 14 34 35.3 13 21.29 13 46.7v92H0Zm287.5-360q29.5 0 51-21 21.5-21.01 21.5-50.5 0-29.5-21.5-51t-51-21.5q-29.49 0-50.5 21.5-21 21.5-21 51 0 29.49 21 50.5 21.01 21 50.5 21ZM72-264h432v-20q0-6.07-3-11.03-3-4.97-8-8.97-48-26-99.5-41t-106-15q-54.5 0-106 14.5T83-304q-5 4-8 8.97-3 4.96-3 11.03v20Zm216-360Zm0 360Z"></path></svg>
+				New&nbsp;account
+			</a>
+			<table class="striped">
+				<thead>
+					<tr>
+						<th scope="col">Name</th>
+						<th scope="col">Plugin</th>
+						<th scope="col">Options</th>
+						<th scope="col"></th>
+					</tr>
+				</thead>
+				<tbody hx-target="closest tr" hx-swap="outerHTML">
+					for _, acc := range accounts {
+						@AccountRow(&acc, nil, false)
+					}
+				</tbody>
+			</table>
+		</div>
+	}
+}
+
+templ AccountRow(acc *plugin.Account, plugins []plugin.Plugin, edit bool) {
+	if edit {
+		<tr>
+			<td><input name="name" value={ acc.Name }/></td>
+			<td>
+				<select name="plugin" aria-label="Select" required>
+					for _, plug := range plugins {
+						<option selected?={ acc.Plugin == plug.Name }>{ plug.Name }</option>
+					}
+				</select>
+			</td>
+			<td><textarea name="options">{ acc.Options }</textarea></td>
+			<td style="width: 1%; min-width: min-content">
+				<div role="group" style="margin-bottom: 0;">
+					<button style="border:0" hx-put={ fmt.Sprintf("/partials/account/%v", acc.ID) } hx-include="closest tr">
+						<svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M389-267 195-460l51-52 143 143 325-324 51 51-376 375Z"></path></svg>
+					</button>
+					<button style="border:0" hx-get={ fmt.Sprintf("/partials/account/%v", acc.ID) }>
+						<svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="m339-288 141-141 141 141 51-51-141-141 141-141-51-51-141 141-141-141-51 51 141 141-141 141 51 51ZM480-96q-79 0-149-30t-122.5-82.5Q156-261 126-331T96-480q0-80 30-149.5t82.5-122Q261-804 331-834t149-30q80 0 149.5 30t122 82.5Q804-699 834-629.5T864-480q0 79-30 149t-82.5 122.5Q699-156 629.5-126T480-96Zm0-72q130 0 221-91t91-221q0-130-91-221t-221-91q-130 0-221 91t-91 221q0 130 91 221t221 91Zm0-312Z"></path></svg>
+					</button>
+				</div>
+			</td>
+		</tr>
+	} else {
+		<tr>
+			<td>{ acc.Name }</td>
+			<td>{ acc.Plugin }</td>
+			<td>{ acc.Options }</td>
+			<td style="width: 1%; min-width: min-content">
+				<div role="group" style="">
+					<button style="border:0" hx-get={ fmt.Sprintf("/partials/account/%v/edit", acc.ID) }>
+						<svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M192-396v-72h288v72H192Zm0-150v-72h432v72H192Zm0-150v-72h432v72H192Zm336 504v-113l210-209q7.26-7.41 16.13-10.71Q763-528 771.76-528q9.55 0 18.31 3.5Q798.83-521 806-514l44 45q6.59 7.26 10.29 16.13Q864-444 864-435.24t-3.29 17.92q-3.3 9.15-10.71 16.32L641-192H528Zm288-243-45-45 45 45ZM576-240h45l115-115-22-23-22-22-116 115v45Zm138-138-22-22 44 45-22-23Z"></path></svg>
+					</button>
+					<button hx-confirm="All data will be lost. Proceed ?" hx-delete={ fmt.Sprintf("/partials/account/%v", acc.ID) } style="border:0">
+						<svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor">
+							<path d="M312-144q-29.7 0-50.85-21.15Q240-186.3 240-216v-480h-48v-72h192v-48h192v48h192v72h-48v479.57Q720-186 698.85-165T648-144H312Zm336-552H312v480h336v-480ZM384-288h72v-336h-72v336Zm120 0h72v-336h-72v336ZM312-696v480-480Z"></path>
+						</svg>
+					</button>
+				</div>
+			</td>
+		</tr>
+	}
+}
+
+templ NewAccountPage(plugins []plugin.Plugin) {
+	@Layout("") {
+		<form style="display: flex; flex-direction: column; gap: 1rem" hx-post="/account">
+			<h2>New account</h2>
+			<fieldset style="display: flex; flex-direction: column;gap:1rem">
+				<label>
+					Name
+					<input
+          required
+						name="name"
+						placeholder="user@gmail.com / AWS S3 Dev env..."
+					/>
+				</label>
+				<label>
+					Plugin
+					<select name="plugin" aria-label="Select your favorite cuisine..." required>
+          <option selected disabled value="">Select plugin</option>
+						for _, plug := range plugins {
+							<option value={plug.Name}>{ plug.Name }</option>
+						}
+					</select>
+				</label>
+				<label>
+					Options
+					<textarea name="options" placeholder='{"profile":"c1", "region":"eu-west-3"}'></textarea>
+				</label>
+			</fieldset>
+			<input
+				type="submit"
+				value="Add"
+			/>
+		</form>
+	}
+}

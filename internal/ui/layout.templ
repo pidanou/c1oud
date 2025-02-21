@@ -1,24 +1,88 @@
 package ui
 
-templ Layout() {
-  <html>
+css rootDiv() {
+	padding: 0 1rem;
+}
 
-<head>
-  <script src="/static/htmx.min.js"></script>
-  <script>htmx.config.useTemplateFragments = true</script>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <style>
-    body {
-      font-family: helvetica, sans-serif
+css navItem() {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 0.5rem;
+	font-weight: bold;
+}
+
+css activeNavItem() {
+	text-decoration: underline !important;
+	color: white;
+}
+
+templ Layout(activeTab string) {
+	<html>
+		<head>
+			<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+			<script src="/static/htmx.min.js"></script>
+			<script>htmx.config.useTemplateFragments = true</script>
+			<script>
+  htmx.defineExtension('push-url-w-params', {
+    onEvent : function(name, e) {
+        if (name === "htmx:configRequest") {
+            const path = e.target.getAttribute('data-push-url')
+            const params = new URLSearchParams(e.detail.parameters).toString()
+            const url = `${window.location.origin}${path}?${params}`
+            window.history.pushState({}, '', url);
+        }
     }
+})
+</script>
+			<link
+				rel="stylesheet"
+				href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.slate.min.css"
+			/>
+			<link
+				rel="stylesheet"
+				href="/static/pico-override.css"
+			/>
+			<link
+				rel="stylesheet"
+				href="/static/style.css"
+			/>
+			<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+			<style>
+      body {
+        font-family: helvetica, sans-serif
+      }
   </style>
-</head>
-
-<body>
-  <div id="main" class="w-screen h-screen flex flex-col">
-    { children... }
-  </div>
-</body>
-
-</html>
-  }
+		</head>
+		<body>
+			<div class={ rootDiv() }>
+				<nav>
+					<ul>
+						<li>
+							<a href="/data" class={ templ.KV(activeNavItem(), activeTab == "data"), navItem() }>
+								<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M480-120q-151 0-255.5-46.5T120-280v-400q0-66 105.5-113T480-840q149 0 254.5 47T840-680v400q0 67-104.5 113.5T480-120Zm0-479q89 0 179-25.5T760-679q-11-29-100.5-55T480-760q-91 0-178.5 25.5T200-679q14 30 101.5 55T480-599Zm0 199q42 0 81-4t74.5-11.5q35.5-7.5 67-18.5t57.5-25v-120q-26 14-57.5 25t-67 18.5Q600-528 561-524t-81 4q-42 0-82-4t-75.5-11.5Q287-543 256-554t-56-25v120q25 14 56 25t66.5 18.5Q358-408 398-404t82 4Zm0 200q46 0 93.5-7t87.5-18.5q40-11.5 67-26t32-29.5v-98q-26 14-57.5 25t-67 18.5Q600-328 561-324t-81 4q-42 0-82-4t-75.5-11.5Q287-343 256-354t-56-25v99q5 15 31.5 29t66.5 25.5q40 11.5 88 18.5t94 7Z"></path></svg>
+								Data
+							</a>
+						</li>
+						<li>
+							<a href="/accounts" class={ navItem(), templ.KV(activeNavItem(), activeTab == "accounts") }>
+								<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M40-160v-112q0-34 17.5-62.5T104-378q62-31 126-46.5T360-440q66 0 130 15.5T616-378q29 15 46.5 43.5T680-272v112H40Zm720 0v-120q0-44-24.5-84.5T666-434q51 6 96 20.5t84 35.5q36 20 55 44.5t19 53.5v120H760ZM360-480q-66 0-113-47t-47-113q0-66 47-113t113-47q66 0 113 47t47 113q0 66-47 113t-113 47Zm400-160q0 66-47 113t-113 47q-11 0-28-2.5t-28-5.5q27-32 41.5-71t14.5-81q0-42-14.5-81T544-792q14-5 28-6.5t28-1.5q66 0 113 47t47 113ZM120-240h480v-32q0-11-5.5-20T580-306q-54-27-109-40.5T360-360q-56 0-111 13.5T140-306q-9 5-14.5 14t-5.5 20v32Zm240-320q33 0 56.5-23.5T440-640q0-33-23.5-56.5T360-720q-33 0-56.5 23.5T280-640q0 33 23.5 56.5T360-560Zm0 320Zm0-400Z"></path></svg>
+								Accounts
+							</a>
+						</li>
+						<li>
+							<a href="/plugins" class={ navItem(), templ.KV(activeNavItem(), activeTab == "plugins") }>
+								<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M352-120H200q-33 0-56.5-23.5T120-200v-152q48 0 84-30.5t36-77.5q0-47-36-77.5T120-568v-152q0-33 23.5-56.5T200-800h160q0-42 29-71t71-29q42 0 71 29t29 71h160q33 0 56.5 23.5T800-720v160q42 0 71 29t29 71q0 42-29 71t-71 29v160q0 33-23.5 56.5T720-120H568q0-50-31.5-85T460-240q-45 0-76.5 35T352-120Zm-152-80h85q24-66 77-93t98-27q45 0 98 27t77 93h85v-240h80q8 0 14-6t6-14q0-8-6-14t-14-6h-80v-240H480v-80q0-8-6-14t-14-6q-8 0-14 6t-6 14v80H200v88q54 20 87 67t33 105q0 57-33 104t-87 68v88Zm260-260Z"></path></svg>
+								Plugins
+							</a>
+						</li>
+					</ul>
+				</nav>
+				<div id="main" class="">
+					@Toast()
+					{ children... }
+				</div>
+			</div>
+		</body>
+	</html>
+}

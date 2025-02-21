@@ -1,0 +1,13 @@
+.loader-indicator {
+  display: none;
+}
+.htmx-request .loader-indicator {
+  display: inline;
+}
+.htmx-request.loader-indicator {
+  display: inline;
+}
+
+.htmx-request.loader-indicator ~ svg {
+  display: none;
+}

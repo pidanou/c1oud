@@ -2,6 +2,7 @@ package pluginmanager
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -27,13 +28,13 @@ var pluginMap = map[string]plugin.Plugin{
 	"connector": &plug.ConnectorGRPCPlugin{},
 }
 
-func (p *PluginManager) Execute(accountIDs []int) error {
+func (p *PluginManager) Execute(accountIDs []int32) error {
 	results := make(chan error, len(accountIDs))
 	var wg sync.WaitGroup
 
 	for _, accountID := range accountIDs {
 		wg.Add(1)
-		go func(id int) {
+		go func(id int32) {
 			defer wg.Done()
 			result := p.sync(id)
 			results <- result
@@ -60,7 +61,7 @@ func (p *PluginManager) Execute(accountIDs []int) error {
 	return nil
 }
 
-func (p *PluginManager) sync(accountID int) error {
+func (p *PluginManager) sync(accountID int32) error {
 	logger := hclog.New(&hclog.LoggerOptions{
 		Name:   "plugin",
 		Output: os.Stdout,
@@ -93,9 +94,10 @@ func (p *PluginManager) sync(accountID int) error {
 	if err != nil {
 		log.Println(err)
 	}
+	fmt.Println(acc.ID)
 
 	connector := raw.(plug.Connector)
-	err = connector.Sync(acc.Options, &callbackHandler{Plugin: pl.Name, DataRepository: p.PluginRepository})
+	err = connector.Sync(acc.Options, &callbackHandler{AccountID: acc.ID, Plugin: pl.Name, DataRepository: p.PluginRepository})
 	if err != nil {
 		return err
 	}
@@ -104,6 +106,7 @@ func (p *PluginManager) sync(accountID int) error {
 }
 
 type callbackHandler struct {
+	AccountID      int32
 	Plugin         string
 	DataRepository repositories.PluginRepository
 }
@@ -111,7 +114,7 @@ type callbackHandler struct {
 func (c *callbackHandler) Callback(res *proto.SyncResponse) (*proto.Empty, error) {
 	data := []plug.Data{}
 	for _, obj := range res.Response {
-		d := plug.Data{RemoteID: obj.RemoteId, Plugin: c.Plugin, ResourceName: obj.ResourceName, URI: obj.Uri, Metadata: obj.Metadata}
+		d := plug.Data{AccountID: c.AccountID, RemoteID: obj.RemoteId, Plugin: c.Plugin, ResourceName: obj.ResourceName, URI: obj.Uri, Metadata: obj.Metadata}
 		data = append(data, d)
 	}
 	err := c.DataRepository.AddData(data)

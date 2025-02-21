@@ -21,7 +21,7 @@ func downloadFromVCS(plug *plugin.Plugin) error {
 		return err
 	}
 
-	cmd := exec.Command("git", "clone", plug.URI)
+	cmd := exec.Command("git", "clone", plug.URI, ".")
 	cmd.Dir = downloadPath
 	err = cmd.Run()
 	if err != nil {
@@ -100,7 +100,7 @@ func downloadFromHTTP(plug *plugin.Plugin) error {
 
 func updateFromHTTP(plug *plugin.Plugin) error {
 	if plug.UpdateCommand == "" {
-		err := deletePlugin(plug)
+		err := DeletePlugin(plug.Name)
 		if err != nil {
 			return err
 		}
@@ -164,7 +164,7 @@ func downloadFromLocal(plug *plugin.Plugin) error {
 
 func updateFromLocal(plug *plugin.Plugin) error {
 	if plug.UpdateCommand == "" {
-		err := deletePlugin(plug)
+		err := DeletePlugin(plug.Name)
 		if err != nil {
 			return err
 		}
@@ -236,6 +236,6 @@ func copyFile(src, dst string) error {
 	return nil
 }
 
-func deletePlugin(plug *plugin.Plugin) error {
-	return os.RemoveAll(path.Join(constants.Envs["C1_DIR"], plug.Name))
+func DeletePlugin(name string) error {
+	return os.RemoveAll(path.Join(constants.Envs["C1_DIR"], name))
 }

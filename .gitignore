@@ -30,3 +30,9 @@ go.work.sum
 
 # temp plugins
 temp/*
+
+# JS 
+*node_modules*
+
+# MAC 
+*DS_Store*

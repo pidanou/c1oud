@@ -8,7 +8,7 @@ message DataObject {
     string remote_id = 1;
     string resource_name = 2;
     string uri = 3;
-    map<string, string> metadata = 4;
+    string metadata = 4;
   }
 
 message SyncRequest {
@@ -16,6 +16,7 @@ message SyncRequest {
     uint32 callback_handler_server = 2;
 }
 
+// TODO: Add flag to know if full or differential sync
 message SyncResponse {
     repeated DataObject response = 1;
 }
