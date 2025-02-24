@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/pidanou/c1-core/internal/types"
 	"github.com/pidanou/c1-core/pkg/plugin"
 )
 
@@ -118,15 +119,13 @@ func (p *PostgresRepository) AddData(data []plugin.Data) error {
 	return nil
 }
 
-func (p *PostgresRepository) ListData(limit, offset int, filters map[string]string) ([]plugin.Data, error) {
+func (p *PostgresRepository) ListData(filters *types.Filter) ([]plugin.Data, error) {
 	var data []plugin.Data
 	query := `SELECT * FROM data WHERE 1=1`
 	query, args, err := p.buildQuery(query, filters)
 	if err != nil {
 		return nil, err
 	}
-	query += " ORDER BY id DESC LIMIT $" + fmt.Sprint(len(args)+1) + " OFFSET $" + fmt.Sprint(len(args)+2)
-	args = append(args, limit, offset)
 	err = p.DB.Select(&data, query, args...)
 	if err != nil {
 		return nil, err
@@ -154,13 +153,53 @@ func (p *PostgresRepository) EditData(data *plugin.Data) (*plugin.Data, error) {
 	return p.GetData(data.ID)
 }
 
-func (p *PostgresRepository) buildQuery(baseQuery string, filters map[string]string) (string, []interface{}, error) {
-	var args []interface{}
-	index := 1
-	for key, value := range filters {
-		baseQuery += fmt.Sprintf(" AND "+key+" = $%v", index)
-		args = append(args, value)
-		index++
+func (p *PostgresRepository) buildQuery(baseQuery string, filters *types.Filter) (string, []interface{}, error) {
+	if filters == nil {
+		baseQuery += " ORDER BY account_id ASC LIMIT 50"
+		return baseQuery, []interface{}{}, nil
 	}
+	var args []interface{}
+	if filters.Accounts != nil {
+		queryPart, argsPart, _ := sqlx.In(" AND account_id in (?)", filters.Accounts)
+		baseQuery += queryPart
+		args = append(args, argsPart...)
+	} else {
+		baseQuery += " AND account_id is null"
+	}
+	if filters.Plugins != nil {
+		queryPart, argsPart, _ := sqlx.In(" AND plugin in (?)", filters.Plugins)
+		baseQuery += queryPart
+		args = append(args, argsPart...)
+	} else {
+		baseQuery += " AND plugin is null"
+	}
+	// TODO: tags manager
+	// if filters.Tags != nil {
+	// 	queryPart, argsPart, _ := sqlx.In(fmt.Sprintf("%v  AND tags in (?)", baseQuery), filters.Tags)
+	// 	baseQuery += queryPart
+	// 	args = append(args, argsPart...)
+	// } else {
+	// 	baseQuery += " AND tags is null"
+	// }
+	if filters.OrderBy != "" {
+		baseQuery += fmt.Sprintf("%v ORDER BY %s", baseQuery, filters.OrderBy)
+	} else {
+		baseQuery += " ORDER BY account_id"
+	}
+	if filters.Sort != "" && (filters.Sort == "ASC" || filters.Sort == "DESC") {
+		baseQuery += fmt.Sprint(" %v", filters.Sort)
+	} else {
+		baseQuery += " ASC"
+	}
+	if filters.Limit != 0 {
+		baseQuery += fmt.Sprintf(" LIMIT %v", filters.Limit)
+	} else {
+		baseQuery += " LIMIT 50"
+	}
+	if filters.Offset != 0 {
+		baseQuery += fmt.Sprintf(" Offset %v", filters.Offset)
+	}
+	baseQuery = p.DB.Rebind(baseQuery)
+	fmt.Println(baseQuery, args)
 	return baseQuery, args, nil
 }

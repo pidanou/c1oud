@@ -67,6 +67,7 @@ func (s *Server) Start() error {
 	partials := e.Group("/partials")
 
 	partials.GET("/data/:id/edit", h.GetEditDataRow)
+	partials.GET("/data", h.GetData)
 	partials.PUT("/data/:id", h.PutData)
 	partials.POST("/data/sync", h.PostDataSync)
 

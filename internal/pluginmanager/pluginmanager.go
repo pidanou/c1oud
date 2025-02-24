@@ -156,8 +156,8 @@ func (p *PluginManager) DeleteAccount(id int32) error {
 	return p.PluginRepository.DeleteAccount(id)
 }
 
-func (p *PluginManager) ListData(limit, offset int, filters map[string]string) ([]plugin.Data, error) {
-	return p.PluginRepository.ListData(limit, offset, filters)
+func (p *PluginManager) ListData(filters *types.Filter) ([]plugin.Data, error) {
+	return p.PluginRepository.ListData(filters)
 }
 
 func (p *PluginManager) GetData(id int32) (*plugin.Data, error) {

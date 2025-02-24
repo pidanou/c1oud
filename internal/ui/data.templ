@@ -1,12 +1,12 @@
 package ui
 
 import (
-"github.com/pidanou/c1-core/pkg/plugin"
-"fmt"
+	"fmt"
+	"github.com/pidanou/c1-core/pkg/plugin"
 )
 
-templ DataPage(accounts []plugin.Account, data []plugin.Data) {
-  <style>
+templ DataPage(accounts []plugin.Account, data []plugin.Data, plugins []plugin.Plugin) {
+	<style>
 @keyframes spin {
   100% {
     transform: rotate(-360deg);
@@ -17,38 +17,82 @@ templ DataPage(accounts []plugin.Account, data []plugin.Data) {
   animation: spin 1s linear infinite;
 }
   </style>
-  	@Layout("data") {
-		<div style="display: flex; flex-direction: column; gap: 1rem">
-			<button hx-swap="outerHTML" hx-target="#data-table" hx-post="/partials/data/sync" hx-indicator=".sync-spinner" class="contrast" style="display:flex; gap: 1rem; width: max-content; align-items:center;margin-left:auto"><svg class="sync-spinner" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M216-192v-72h74q-45-40-71.5-95.5T192-480q0-101 61-177.5T408-758v75q-63 23-103.5 77.5T264-480q0 48 19.5 89t52.5 70v-63h72v192H216Zm336-10v-75q63-23 103.5-77.5T696-480q0-48-19.5-89T624-639v63h-72v-192h192v72h-74q45 40 71.5 95.5T768-480q0 101-61 177.5T552-202Z"/></svg>
-				Sync all
-			</button>
-      @DataTable(accounts, data)
+	@Layout("data") {
+		<div style="display: flex; flex-direction: row; gap: 1rem;">
+			<div style="width: 15%; display: flex; flex-direction: column; gap:1rem; padding: 0 10px">
+				<details class="dropdown">
+					<summary role="button">
+						Sync accounts
+					</summary>
+					<ul>
+						for _, acc := range accounts {
+							<li>
+								<label>
+									<input type="checkbox" name="account_id" value={ fmt.Sprint(acc.ID) } checked/>
+									{ acc.Name }
+								</label>
+							</li>
+						}
+				<button hx-swap="outerHTML" hx-target="#data-table-body" hx-post="/partials/data/sync" hx-indicator=".sync-spinner" style="display:flex; gap: 1rem; align-items:center; justify-content: center">
+						<svg class="sync-spinner" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M216-192v-72h74q-45-40-71.5-95.5T192-480q0-101 61-177.5T408-758v75q-63 23-103.5 77.5T264-480q0 48 19.5 89t52.5 70v-63h72v192H216Zm336-10v-75q63-23 103.5-77.5T696-480q0-48-19.5-89T624-639v63h-72v-192h192v72h-74q45 40 71.5 95.5T768-480q0 101-61 177.5T552-202Z"></path></svg>
+
+        </button>
+					</ul>
+				</details>
+        <h5>Filters</h5>
+        <div id="filters">
+				<fieldset>
+        <legend>Accounts:</legend>
+					for _, acc := range accounts {
+						<label>
+							<input type="checkbox" name="account_id" value={ fmt.Sprint(acc.ID) } checked hx-get="/partials/data" hx-include="#filters" hx-target="#data-table-body" hx-swap="outerHTML"/>
+							{ acc.Name }
+						</label>
+					}
+				</fieldset>
+				<fieldset>
+        <legend>Plugins:</legend>
+					for _, plg := range plugins {
+						<label>
+							<input type="checkbox" name="plugin" value={ plg.Name } checked hx-get="/partials/data" hx-include="#filters" hx-target="#data-table-body" hx-swap="outerHTML"/>
+							{ plg.Name }
+						</label>
+					}
+				</fieldset>
+        </div>
+			</div>
+			<div style="display: flex; flex-direction: column; gap: 1rem; width:90%;">
+				<div style="margin-left: auto ">
+					@Pagination(false, false, 2, 40)
+				</div>
+				<div style="display: flex; flex-direction: row; gap: 1rem; width: 100%">
+					<table class="striped" style="width: 100%; font-size: small">
+						<thead style="width: 100vw">
+							<tr>
+								<th scope="col">Plugin</th>
+								<th scope="col">Account</th>
+								<th scope="col">Resource name</th>
+								<th scope="col">Metadata</th>
+								<th scope="col">Notes</th>
+								<th scope="col">Tags</th>
+								<th scope="col"></th>
+							</tr>
+						</thead>
+						@DataTableBody(accounts, data)
+					</table>
+				</div>
+			</div>
 		</div>
 	}
-
 }
 
-templ DataTable(accounts []plugin.Account, data []plugin.Data) {
-			<table class="striped" id="data-table" style="width: 100%; font-size: small">
-				<thead style="width: 100vw">
-					<tr>
-						<th scope="col">Plugin</th>
-						<th scope="col">Account</th>
-						<th scope="col">Resource name</th>
-						<th scope="col">URI</th>
-						<th scope="col">Metadata</th>
-						<th scope="col">Notes</th>
-						<th scope="col">Tags</th>
-						<th scope="col"></th>
-					</tr>
-				</thead>
-				<tbody hx-target="closest tr" hx-swap="outerHTML" style="width: 100vw">
-					for _, row := range data {
-						@DataRow(&row, findAccountByID(accounts, row.AccountID), false)
-					}
-				</tbody>
-			</table>
-  }
+templ DataTableBody(accounts []plugin.Account, data []plugin.Data) {
+	<tbody id="data-table-body" hx-target="closest tr" hx-swap="outerHTML" style="width: 100vw">
+		for _, row:=range data {
+			@DataRow(&row, findAccountByID(accounts, row.AccountID), false)
+		}
+	</tbody>
+}
 
 func findAccountByID(list []plugin.Account, id int32) *plugin.Account {
 	for _, item := range list {
@@ -56,11 +100,11 @@ func findAccountByID(list []plugin.Account, id int32) *plugin.Account {
 			return &item
 		}
 	}
-	return nil
+	return &plugin.Account{}
 }
 
 templ DataRow(data *plugin.Data, acc *plugin.Account, edit bool) {
-  <style>
+	<style>
 td {word-wrap: break-word}
   </style>
 	if edit {
@@ -68,22 +112,20 @@ td {word-wrap: break-word}
 			<td>{ data.Plugin }</td>
 			<td>{ acc.Name }</td>
 			<td>{ data.ResourceName }</td>
-			<td>{ data.URI }</td>
 			<td>{ data.Metadata }</td>
-			<td><textarea name="notes" value={ data.Notes } placeholder="Some stuff"/></td>
+			<td><textarea name="notes" value={ data.Notes } placeholder="Some stuff"></textarea></td>
 			<td><input name="tags" value={ data.Tags } placeholder="dev,personal,important"/></td>
 			<td style="width: 1%; min-width: min-content">
-					<button style="border:0" hx-put={ fmt.Sprintf("/partials/data/%v", data.ID) } hx-include="closest tr">
-						<svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M389-267 195-460l51-52 143 143 325-324 51 51-376 375Z"></path></svg>
-					</button>
+				<button style="border:0" hx-put={ fmt.Sprintf("/partials/data/%v", data.ID) } hx-include="closest tr">
+					<svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M389-267 195-460l51-52 143 143 325-324 51 51-376 375Z"></path></svg>
+				</button>
 			</td>
 		</tr>
 	} else {
 		<tr>
 			<td>{ data.Plugin }</td>
 			<td>{ acc.Name }</td>
-			<td>{ data.ResourceName }</td>
-			<td><a href={templ.URL(data.URI)} target="_blank">{ data.URI }</a></td>
+			<td><a href={ templ.URL(data.URI) } target="_blank">{ data.ResourceName }</a></td>
 			<td>{ data.Metadata }</td>
 			<td>{ data.Notes }</td>
 			<td>{ data.Tags }</td>
@@ -98,3 +140,8 @@ td {word-wrap: break-word}
 	}
 }
 
+templ DataRowsInfiniteScroll(accounts []plugin.Account, data []plugin.Data) {
+	<style>
+td {word-wrap: break-word}
+  </style>
+}

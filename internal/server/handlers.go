@@ -18,29 +18,59 @@ type Handler struct {
 	PluginManager pluginmanager.PluginManager
 }
 
-func Render(ctx echo.Context, statusCode int, t templ.Component) error {
+func Render(ctx echo.Context, statusCode int, t ...templ.Component) error {
+	fmt.Println()
 	buf := templ.GetBuffer()
 	defer templ.ReleaseBuffer(buf)
 
-	if err := t.Render(ctx.Request().Context(), buf); err != nil {
-		return err
+	component := ""
+
+	for _, tpl := range t {
+		if err := tpl.Render(ctx.Request().Context(), buf); err != nil {
+			return err
+		}
+		component = buf.String()
 	}
 
-	return ctx.HTML(statusCode, buf.String())
+	return ctx.HTML(statusCode, component)
 }
 
 func (h *Handler) GetDataPage(c echo.Context) error {
+	plugins, err := h.PluginManager.ListPlugins()
+	if err != nil {
+		log.Println(err)
+		plugins = []plugin.Plugin{}
+	}
+
+	accounts, err := h.PluginManager.ListAccounts()
+	if err != nil {
+		log.Println(err)
+		accounts = []plugin.Account{}
+	}
+
+	data, err := h.PluginManager.ListData(nil)
+	if err != nil {
+		log.Println(err)
+		data = []plugin.Data{}
+	}
+
+	return Render(c, http.StatusOK, ui.DataPage(accounts, data, plugins))
+}
+
+func (h *Handler) GetData(c echo.Context) error {
+	filter := &types.Filter{}
+	c.Bind(filter)
 	accounts, err := h.PluginManager.ListAccounts()
 	if err != nil {
 		log.Println(err)
 	}
 
-	data, err := h.PluginManager.ListData(50, 0, map[string]string{})
+	data, err := h.PluginManager.ListData(filter)
 	if err != nil {
 		log.Println(err)
 	}
 
-	return Render(c, http.StatusOK, ui.DataPage(accounts, data))
+	return Render(c, http.StatusOK, ui.DataTableBody(accounts, data))
 }
 
 func (h *Handler) GetEditDataRow(c echo.Context) error {
@@ -112,12 +142,12 @@ func (h *Handler) PostDataSync(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	data, err := h.PluginManager.ListData(50, 0, map[string]string{})
+	data, err := h.PluginManager.ListData(nil)
 	if err != nil {
 		log.Println(err)
 	}
 
-	return Render(c, http.StatusOK, ui.DataTable(accounts, data))
+	return Render(c, http.StatusOK, ui.DataTableBody(accounts, data))
 }
 
 func (h *Handler) GetAccountsPage(c echo.Context) error {

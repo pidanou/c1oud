@@ -83,7 +83,7 @@ templ NewAccountPage(plugins []plugin.Plugin) {
 				<label>
 					Name
 					<input
-          required
+						required
 						name="name"
 						placeholder="user@gmail.com / AWS S3 Dev env..."
 					/>
@@ -91,9 +91,9 @@ templ NewAccountPage(plugins []plugin.Plugin) {
 				<label>
 					Plugin
 					<select name="plugin" aria-label="Select your favorite cuisine..." required>
-          <option selected disabled value="">Select plugin</option>
+						<option selected disabled value="">Select plugin</option>
 						for _, plug := range plugins {
-							<option value={plug.Name}>{ plug.Name }</option>
+							<option value={ plug.Name }>{ plug.Name }</option>
 						}
 					</select>
 				</label>
