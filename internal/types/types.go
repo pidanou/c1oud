@@ -10,7 +10,6 @@ type Filter struct {
 	Page     int      `query:"page"`
 	Accounts []int    `query:"account_id"`
 	Plugins  []string `query:"plugin"`
-	Tags     []string `query:"tag"`
 	OrderBy  string   `query:"order_by"`
 	Sort     string   `query:"sort"`
 }

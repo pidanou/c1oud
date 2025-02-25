@@ -30,6 +30,5 @@ type Data struct {
 	ResourceName string `db:"resource_name"`
 	URI          string `db:"uri"`
 	Metadata     string `db:"metadata"`
-	Tags         string `db:"tags" form:"tags"`
 	Notes        string `db:"notes" form:"notes"`
 }

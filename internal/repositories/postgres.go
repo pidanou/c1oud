@@ -159,12 +159,11 @@ func (p *PostgresRepository) GetData(id int32) (*plugin.Data, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(data)
 	return data, nil
 }
 
 func (p *PostgresRepository) EditData(data *plugin.Data) (*plugin.Data, error) {
-	query := `UPDATE data SET notes = :notes, tags = :tags WHERE id = :id`
+	query := `UPDATE data SET notes = :notes WHERE id = :id`
 	_, err := p.DB.NamedExec(query, data)
 	if err != nil {
 		return nil, err
@@ -175,49 +174,33 @@ func (p *PostgresRepository) EditData(data *plugin.Data) (*plugin.Data, error) {
 func (p *PostgresRepository) buildQuery(baseQuery string, countQuery string, filters *types.Filter) (string, string, []interface{}, error) {
 	var args []interface{}
 	if filters == nil {
-		baseQuery += fmt.Sprintf(" ORDER BY account_id ASC LIMIT %v", constants.PageSize)
+		baseQuery += fmt.Sprintf(" ORDER BY account_id ASC, resource_name ASC LIMIT %v", constants.PageSize)
 		return baseQuery, countQuery, []interface{}{}, nil
 	}
 	if filters.Search != "" {
-		baseQuery += fmt.Sprint(" AND (resource_name ILIKE ? OR metadata ILIKE ? OR notes ILIKE ? OR tags ILIKE ?)")
-		countQuery += fmt.Sprint(" AND (resource_name ILIKE ? OR metadata ILIKE ? OR notes ILIKE ? OR tags ILIKE ?)")
-		args = append(args, "%"+filters.Search+"%", "%"+filters.Search+"%", "%"+filters.Search+"%", "%"+filters.Search+"%")
+		baseQuery += fmt.Sprint(" AND (resource_name ILIKE ? OR metadata ILIKE ? OR notes ILIKE ?)")
+		countQuery += fmt.Sprint(" AND (resource_name ILIKE ? OR metadata ILIKE ? OR notes ILIKE ?)")
+		args = append(args, "%"+filters.Search+"%", "%"+filters.Search+"%", "%"+filters.Search+"%", "%")
 	}
 	if filters.Accounts != nil {
 		queryPart, argsPart, _ := sqlx.In(" AND account_id in (?)", filters.Accounts)
 		baseQuery += queryPart
 		countQuery += queryPart
 		args = append(args, argsPart...)
-	} else {
-		baseQuery += " AND account_id is null"
-		countQuery += " AND account_id is null"
 	}
 	if filters.Plugins != nil {
 		queryPart, argsPart, _ := sqlx.In(" AND plugin in (?)", filters.Plugins)
 		baseQuery += queryPart
 		countQuery += queryPart
 		args = append(args, argsPart...)
-	} else {
-		baseQuery += " AND plugin is null"
-		countQuery += " AND account_id is null"
 	}
-	// TODO: tags manager
-	// if filters.Tags != nil {
-	// 	queryPart, argsPart, _ := sqlx.In(fmt.Sprintf("%v  AND tags in (?)", baseQuery), filters.Tags)
-	// 	baseQuery += queryPart
-	// 	args = append(args, argsPart...)
-	// } else {
-	// 	baseQuery += " AND tags is null"
-	// }
 	if filters.OrderBy != "" && isValidOrderBy(filters.OrderBy) {
 		baseQuery += fmt.Sprintf("%v ORDER BY %s", baseQuery, filters.OrderBy)
 	} else {
-		baseQuery += " ORDER BY account_id"
+		baseQuery += " ORDER BY account_id ASC, resource_name ASC"
 	}
 	if filters.Sort != "" && (filters.Sort == "ASC" || filters.Sort == "DESC") {
 		baseQuery += fmt.Sprint(" %v", filters.Sort)
-	} else {
-		baseQuery += " ASC"
 	}
 	baseQuery += " LIMIT 50"
 	if filters.Page != 0 {
@@ -225,6 +208,7 @@ func (p *PostgresRepository) buildQuery(baseQuery string, countQuery string, fil
 	}
 	baseQuery = p.DB.Rebind(baseQuery)
 	countQuery = p.DB.Rebind(countQuery)
+	fmt.Println(baseQuery)
 	return baseQuery, countQuery, args, nil
 }
 
@@ -232,8 +216,6 @@ func isValidOrderBy(orderBy string) bool {
 	allowedColumns := map[string]bool{
 		"account_id":    true,
 		"resource_name": true,
-		"metadata":      true,
-		"tags":          true,
 	}
 	return allowedColumns[orderBy]
 }

@@ -49,10 +49,6 @@ func (h *Handler) GetDataPage(c echo.Context) error {
 	if filter.Plugins == nil {
 		filter.Plugins = []string{}
 	}
-	// TODO: tags manager
-	// if filter.Tags == nil {
-	//   filter.Tags = []string{}
-	// }
 	plugins, _, err := h.PluginManager.ListPlugins()
 	if err != nil {
 		plugins = []plugin.Plugin{}
