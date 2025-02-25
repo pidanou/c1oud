@@ -6,8 +6,8 @@ type PluginForm struct {
 }
 
 type Filter struct {
-	Limit    int      `query:"limit"`
-	Offset   int      `query:"offset"`
+	Search   string   `query:"search"`
+	Page     int      `query:"page"`
 	Accounts []int    `query:"account_id"`
 	Plugins  []string `query:"plugin"`
 	Tags     []string `query:"tag"`

@@ -8,6 +8,7 @@ import (
 
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
+	"github.com/pidanou/c1-core/internal/constants"
 	"github.com/pidanou/c1-core/internal/pluginmanager"
 	"github.com/pidanou/c1-core/internal/types"
 	"github.com/pidanou/c1-core/internal/ui"
@@ -36,41 +37,60 @@ func Render(ctx echo.Context, statusCode int, t ...templ.Component) error {
 }
 
 func (h *Handler) GetDataPage(c echo.Context) error {
-	plugins, err := h.PluginManager.ListPlugins()
+	filter := &types.Filter{}
+	c.Bind(filter)
+	page := filter.Page
+	if page == 0 {
+		page = 1
+	}
+	if filter.Accounts == nil {
+		filter.Accounts = []int{}
+	}
+	if filter.Plugins == nil {
+		filter.Plugins = []string{}
+	}
+	// TODO: tags manager
+	// if filter.Tags == nil {
+	//   filter.Tags = []string{}
+	// }
+	plugins, _, err := h.PluginManager.ListPlugins()
 	if err != nil {
-		log.Println(err)
 		plugins = []plugin.Plugin{}
 	}
 
-	accounts, err := h.PluginManager.ListAccounts()
+	accounts, _, err := h.PluginManager.ListAccounts()
 	if err != nil {
 		log.Println(err)
 		accounts = []plugin.Account{}
 	}
 
-	data, err := h.PluginManager.ListData(nil)
+	data, count, err := h.PluginManager.ListData(filter)
 	if err != nil {
 		log.Println(err)
 		data = []plugin.Data{}
 	}
 
-	return Render(c, http.StatusOK, ui.DataPage(accounts, data, plugins))
+	return Render(c, http.StatusOK, ui.DataPage(accounts, data, plugins, page, (count+constants.PageSize-1)/constants.PageSize))
 }
 
 func (h *Handler) GetData(c echo.Context) error {
 	filter := &types.Filter{}
 	c.Bind(filter)
-	accounts, err := h.PluginManager.ListAccounts()
+	page := filter.Page
+	if page == 0 {
+		page = 1
+	}
+	accounts, _, err := h.PluginManager.ListAccounts()
 	if err != nil {
 		log.Println(err)
 	}
 
-	data, err := h.PluginManager.ListData(filter)
+	data, count, err := h.PluginManager.ListData(filter)
 	if err != nil {
 		log.Println(err)
 	}
 
-	return Render(c, http.StatusOK, ui.DataTableBody(accounts, data))
+	return Render(c, http.StatusOK, ui.DataTableBody(accounts, data), ui.OOB(ui.DataPagination(len(data) == constants.PageSize, page > 1, page, (count+constants.PageSize-1)/constants.PageSize), "outerHTML:.pagination"))
 }
 
 func (h *Handler) GetEditDataRow(c echo.Context) error {
@@ -127,7 +147,7 @@ func (h *Handler) PutData(c echo.Context) error {
 }
 
 func (h *Handler) PostDataSync(c echo.Context) error {
-	accounts, err := h.PluginManager.ListAccounts()
+	accounts, _, err := h.PluginManager.ListAccounts()
 	if err != nil {
 		log.Println(err)
 	}
@@ -142,7 +162,7 @@ func (h *Handler) PostDataSync(c echo.Context) error {
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	data, err := h.PluginManager.ListData(nil)
+	data, _, err := h.PluginManager.ListData(nil)
 	if err != nil {
 		log.Println(err)
 	}
@@ -151,7 +171,7 @@ func (h *Handler) PostDataSync(c echo.Context) error {
 }
 
 func (h *Handler) GetAccountsPage(c echo.Context) error {
-	accounts, err := h.PluginManager.ListAccounts()
+	accounts, _, err := h.PluginManager.ListAccounts()
 	if err != nil {
 		log.Println(err)
 		return Render(c, http.StatusOK, ui.AccountsPage(nil))
@@ -160,7 +180,7 @@ func (h *Handler) GetAccountsPage(c echo.Context) error {
 }
 
 func (h *Handler) GetPluginsPage(c echo.Context) error {
-	plugins, err := h.PluginManager.ListPlugins()
+	plugins, _, err := h.PluginManager.ListPlugins()
 	if err != nil {
 		log.Println(err)
 		return Render(c, http.StatusInternalServerError, ui.PluginsPage(nil))
@@ -274,7 +294,7 @@ func (h *Handler) GetEditAccountRow(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	plugins, err := h.PluginManager.ListPlugins()
+	plugins, _, err := h.PluginManager.ListPlugins()
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -312,7 +332,7 @@ func (h *Handler) DeleteAccount(c echo.Context) error {
 }
 
 func (h *Handler) GetNewAccountPage(c echo.Context) error {
-	plugins, err := h.PluginManager.ListPlugins()
+	plugins, _, err := h.PluginManager.ListPlugins()
 	if err != nil {
 		log.Println(err)
 	}

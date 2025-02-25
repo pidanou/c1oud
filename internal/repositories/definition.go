@@ -6,17 +6,17 @@ import (
 )
 
 type PluginRepository interface {
-	ListPlugins() ([]plugin.Plugin, error)
+	ListPlugins() (res []plugin.Plugin, count int, err error)
 	GetPlugin(name string) (*plugin.Plugin, error)
 	AddPlugin(*plugin.Plugin) (*plugin.Plugin, error)
 	EditPlugin(*plugin.Plugin) (*plugin.Plugin, error)
 	DeletePlugin(name string) error
-	ListAccounts() ([]plugin.Account, error)
+	ListAccounts() (res []plugin.Account, count int, err error)
 	GetAccount(id int32) (*plugin.Account, error)
 	AddAccount(*plugin.Account) (*plugin.Account, error)
 	EditAccount(*plugin.Account) (*plugin.Account, error)
 	DeleteAccount(id int32) error
-	ListData(filters *types.Filter) ([]plugin.Data, error)
+	ListData(filters *types.Filter) (res []plugin.Data, count int, err error)
 	AddData([]plugin.Data) error
 	GetData(id int32) (*plugin.Data, error)
 	EditData(*plugin.Data) (*plugin.Data, error)

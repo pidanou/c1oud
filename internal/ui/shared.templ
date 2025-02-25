@@ -1,7 +1,5 @@
 package ui
 
-import "fmt"
-
 templ spinner(size int, id string, class string) {
 	<style>
 @keyframes spin {
@@ -74,20 +72,6 @@ templ Toast() {
 		</template>
 	</div>
 	<script type="text/javascript" src="/static/toast.js"></script>
-}
-
-templ Pagination(canNext, canPrevious bool, currentPage, totalPage int) {
-	<div role="group" class="pagination" style="width:max-content">
-		<button disabled?={ !canPrevious }>
-			<svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M576-240 336-480l240-240 51 51-189 189 189 189-51 51Z"></path></svg>
-		</button>
-		<select name="favorite-cuisine" aria-label="Page" required>
-			for i := 1; i <= totalPage; i++ {
-				<option selected?={ i==currentPage }>{ fmt.Sprint(i) }</option>
-			}
-		</select>
-		<button disabled?={ !canNext }><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M522-480 333-669l51-51 240 240-240 240-51-51 189-189Z"></path></svg></button>
-	</div>
 }
 
 templ OOB(component templ.Component, swapStrategy string) {

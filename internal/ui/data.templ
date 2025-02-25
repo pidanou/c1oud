@@ -5,7 +5,7 @@ import (
 	"github.com/pidanou/c1-core/pkg/plugin"
 )
 
-templ DataPage(accounts []plugin.Account, data []plugin.Data, plugins []plugin.Plugin) {
+templ DataPage(accounts []plugin.Account, data []plugin.Data, plugins []plugin.Plugin, page int, count int) {
 	<style>
 @keyframes spin {
   100% {
@@ -33,37 +33,40 @@ templ DataPage(accounts []plugin.Account, data []plugin.Data, plugins []plugin.P
 								</label>
 							</li>
 						}
-				<button hx-swap="outerHTML" hx-target="#data-table-body" hx-post="/partials/data/sync" hx-indicator=".sync-spinner" style="display:flex; gap: 1rem; align-items:center; justify-content: center">
-						<svg class="sync-spinner" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M216-192v-72h74q-45-40-71.5-95.5T192-480q0-101 61-177.5T408-758v75q-63 23-103.5 77.5T264-480q0 48 19.5 89t52.5 70v-63h72v192H216Zm336-10v-75q63-23 103.5-77.5T696-480q0-48-19.5-89T624-639v63h-72v-192h192v72h-74q45 40 71.5 95.5T768-480q0 101-61 177.5T552-202Z"></path></svg>
-
-        </button>
+						<button hx-swap="outerHTML" hx-target="#data-table-body" hx-post="/partials/data/sync" hx-indicator=".sync-spinner" style="display:flex; gap: 1rem; align-items:center; justify-content: center">
+							<svg class="sync-spinner" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M216-192v-72h74q-45-40-71.5-95.5T192-480q0-101 61-177.5T408-758v75q-63 23-103.5 77.5T264-480q0 48 19.5 89t52.5 70v-63h72v192H216Zm336-10v-75q63-23 103.5-77.5T696-480q0-48-19.5-89T624-639v63h-72v-192h192v72h-74q45 40 71.5 95.5T768-480q0 101-61 177.5T552-202Z"></path></svg>
+						</button>
 					</ul>
 				</details>
-        <h5>Filters</h5>
-        <div id="filters">
-				<fieldset>
-        <legend>Accounts:</legend>
-					for _, acc := range accounts {
-						<label>
-							<input type="checkbox" name="account_id" value={ fmt.Sprint(acc.ID) } checked hx-get="/partials/data" hx-include="#filters" hx-target="#data-table-body" hx-swap="outerHTML"/>
-							{ acc.Name }
-						</label>
-					}
-				</fieldset>
-				<fieldset>
-        <legend>Plugins:</legend>
-					for _, plg := range plugins {
-						<label>
-							<input type="checkbox" name="plugin" value={ plg.Name } checked hx-get="/partials/data" hx-include="#filters" hx-target="#data-table-body" hx-swap="outerHTML"/>
-							{ plg.Name }
-						</label>
-					}
-				</fieldset>
-        </div>
+				<h5>Filters</h5>
+				<div id="filters">
+					<fieldset>
+						<legend>Accounts:</legend>
+						for _, acc := range accounts {
+							<label>
+								<input type="checkbox" name="account_id" value={ fmt.Sprint(acc.ID) } checked hx-get="/partials/data" hx-include="#filters, #search, .pagination" hx-target="#data-table-body" hx-swap="outerHTML"/>
+								{ acc.Name }
+							</label>
+						}
+					</fieldset>
+					<fieldset>
+						<legend>Plugins:</legend>
+						for _, plg := range plugins {
+							<label>
+								<input type="checkbox" name="plugin" value={ plg.Name } checked hx-get="/partials/data" hx-include="#filters, #search, .pagination" hx-target="#data-table-body" hx-swap="outerHTML"/>
+								{ plg.Name }
+							</label>
+						}
+					</fieldset>
+				</div>
 			</div>
 			<div style="display: flex; flex-direction: column; gap: 1rem; width:90%;">
-				<div style="margin-left: auto ">
-					@Pagination(false, false, 2, 40)
+				<div style="display: flex; flex-direction: row; align-items: center; gap: 1rem ">
+					<form role="search" hx-get="/partials/data" hx-include="#filters" hx-vals='{"page":1}' hx-target="#data-table-body" hx-swap="outerHTML">
+						<input id="search" name="search" type="search" placeholder="Search with filters"/>
+						<input type="submit" value="Search"/>
+					</form>
+					@DataPagination(len(data) == 50, page > 1, page, count)
 				</div>
 				<div style="display: flex; flex-direction: row; gap: 1rem; width: 100%">
 					<table class="striped" style="width: 100%; font-size: small">
@@ -140,8 +143,16 @@ td {word-wrap: break-word}
 	}
 }
 
-templ DataRowsInfiniteScroll(accounts []plugin.Account, data []plugin.Data) {
-	<style>
-td {word-wrap: break-word}
-  </style>
+templ DataPagination(canNext, canPrevious bool, currentPage, totalPage int) {
+	<div role="group" class="pagination" style="width: max-content;">
+		<button disabled?={ !canPrevious } hx-swap="outerHTML" hx-get={ fmt.Sprintf("/partials/data?page=%v", currentPage-1) } hx-include="#filters, #search" hx-target="#data-table-body">
+			<svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M576-240 336-480l240-240 51 51-189 189 189 189-51 51Z"></path></svg>
+		</button>
+		<select name="page" aria-label="Page" required style="width:max-content;" hx-swap="outerHTML" hx-get="/partials/data" hx-include="#filters, #search, .pagination" hx-target="#data-table-body">
+			for i := 1; i <= totalPage; i++ {
+				<option selected?={ i==currentPage }>{ fmt.Sprint(i) }</option>
+			}
+		</select>
+		<button disabled?={ !canNext } hx-swap="outerHTML" hx-get={ fmt.Sprintf("/partials/data?page=%v", currentPage+1) } hx-include="#filters, #search" hx-target="#data-table-body"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M522-480 333-669l51-51 240 240-240 240-51-51 189-189Z"></path></svg></button>
+	</div>
 }

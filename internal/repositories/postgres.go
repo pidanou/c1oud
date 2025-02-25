@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/pidanou/c1-core/internal/constants"
 	"github.com/pidanou/c1-core/internal/types"
 	"github.com/pidanou/c1-core/pkg/plugin"
 )
@@ -16,14 +17,20 @@ func NewPostgresRepository(DB *sqlx.DB) *PostgresRepository {
 	return &PostgresRepository{DB: DB}
 }
 
-func (p *PostgresRepository) ListPlugins() ([]plugin.Plugin, error) {
+func (p *PostgresRepository) ListPlugins() ([]plugin.Plugin, int, error) {
 	var plugins []plugin.Plugin
+	var count = 0
 	query := `SELECT * FROM plugins`
 	err := p.DB.Select(&plugins, query)
 	if err != nil {
-		return nil, err
+		return nil, count, err
 	}
-	return plugins, nil
+	query = `SELECT count(*) from plugins`
+	err = p.DB.Get(&count, query)
+	if err != nil {
+		return nil, count, err
+	}
+	return plugins, count, nil
 }
 
 func (p *PostgresRepository) GetPlugin(name string) (*plugin.Plugin, error) {
@@ -63,14 +70,20 @@ func (p *PostgresRepository) EditPlugin(plug *plugin.Plugin) (*plugin.Plugin, er
 	return plug, nil
 }
 
-func (p *PostgresRepository) ListAccounts() ([]plugin.Account, error) {
+func (p *PostgresRepository) ListAccounts() ([]plugin.Account, int, error) {
 	var accounts []plugin.Account
+	var count = 0
 	query := `SELECT * FROM accounts`
 	err := p.DB.Select(&accounts, query)
 	if err != nil {
-		return nil, err
+		return nil, count, err
 	}
-	return accounts, nil
+	query = `SELECT count(*) from accounts`
+	err = p.DB.Get(&count, query)
+	if err != nil {
+		return nil, count, err
+	}
+	return accounts, count, nil
 }
 
 func (p *PostgresRepository) GetAccount(id int32) (*plugin.Account, error) {
@@ -119,18 +132,24 @@ func (p *PostgresRepository) AddData(data []plugin.Data) error {
 	return nil
 }
 
-func (p *PostgresRepository) ListData(filters *types.Filter) ([]plugin.Data, error) {
+func (p *PostgresRepository) ListData(filters *types.Filter) ([]plugin.Data, int, error) {
 	var data []plugin.Data
+	var count = 0
 	query := `SELECT * FROM data WHERE 1=1`
-	query, args, err := p.buildQuery(query, filters)
+	countQuery := `SELECT count(*) FROM data WHERE 1=1`
+	query, countQuery, args, err := p.buildQuery(query, countQuery, filters)
 	if err != nil {
-		return nil, err
+		return nil, count, err
 	}
 	err = p.DB.Select(&data, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, count, err
 	}
-	return data, nil
+	err = p.DB.Get(&count, countQuery, args...)
+	if err != nil {
+		return nil, count, err
+	}
+	return data, count, nil
 }
 
 func (p *PostgresRepository) GetData(id int32) (*plugin.Data, error) {
@@ -153,25 +172,34 @@ func (p *PostgresRepository) EditData(data *plugin.Data) (*plugin.Data, error) {
 	return p.GetData(data.ID)
 }
 
-func (p *PostgresRepository) buildQuery(baseQuery string, filters *types.Filter) (string, []interface{}, error) {
-	if filters == nil {
-		baseQuery += " ORDER BY account_id ASC LIMIT 50"
-		return baseQuery, []interface{}{}, nil
-	}
+func (p *PostgresRepository) buildQuery(baseQuery string, countQuery string, filters *types.Filter) (string, string, []interface{}, error) {
 	var args []interface{}
+	if filters == nil {
+		baseQuery += fmt.Sprintf(" ORDER BY account_id ASC LIMIT %v", constants.PageSize)
+		return baseQuery, countQuery, []interface{}{}, nil
+	}
+	if filters.Search != "" {
+		baseQuery += fmt.Sprint(" AND (resource_name ILIKE ? OR metadata ILIKE ? OR notes ILIKE ? OR tags ILIKE ?)")
+		countQuery += fmt.Sprint(" AND (resource_name ILIKE ? OR metadata ILIKE ? OR notes ILIKE ? OR tags ILIKE ?)")
+		args = append(args, "%"+filters.Search+"%", "%"+filters.Search+"%", "%"+filters.Search+"%", "%"+filters.Search+"%")
+	}
 	if filters.Accounts != nil {
 		queryPart, argsPart, _ := sqlx.In(" AND account_id in (?)", filters.Accounts)
 		baseQuery += queryPart
+		countQuery += queryPart
 		args = append(args, argsPart...)
 	} else {
 		baseQuery += " AND account_id is null"
+		countQuery += " AND account_id is null"
 	}
 	if filters.Plugins != nil {
 		queryPart, argsPart, _ := sqlx.In(" AND plugin in (?)", filters.Plugins)
 		baseQuery += queryPart
+		countQuery += queryPart
 		args = append(args, argsPart...)
 	} else {
 		baseQuery += " AND plugin is null"
+		countQuery += " AND account_id is null"
 	}
 	// TODO: tags manager
 	// if filters.Tags != nil {
@@ -181,7 +209,7 @@ func (p *PostgresRepository) buildQuery(baseQuery string, filters *types.Filter)
 	// } else {
 	// 	baseQuery += " AND tags is null"
 	// }
-	if filters.OrderBy != "" {
+	if filters.OrderBy != "" && isValidOrderBy(filters.OrderBy) {
 		baseQuery += fmt.Sprintf("%v ORDER BY %s", baseQuery, filters.OrderBy)
 	} else {
 		baseQuery += " ORDER BY account_id"
@@ -191,15 +219,21 @@ func (p *PostgresRepository) buildQuery(baseQuery string, filters *types.Filter)
 	} else {
 		baseQuery += " ASC"
 	}
-	if filters.Limit != 0 {
-		baseQuery += fmt.Sprintf(" LIMIT %v", filters.Limit)
-	} else {
-		baseQuery += " LIMIT 50"
-	}
-	if filters.Offset != 0 {
-		baseQuery += fmt.Sprintf(" Offset %v", filters.Offset)
+	baseQuery += " LIMIT 50"
+	if filters.Page != 0 {
+		baseQuery += fmt.Sprintf(" Offset %v", (filters.Page-1)*constants.PageSize)
 	}
 	baseQuery = p.DB.Rebind(baseQuery)
-	fmt.Println(baseQuery, args)
-	return baseQuery, args, nil
+	countQuery = p.DB.Rebind(countQuery)
+	return baseQuery, countQuery, args, nil
+}
+
+func isValidOrderBy(orderBy string) bool {
+	allowedColumns := map[string]bool{
+		"account_id":    true,
+		"resource_name": true,
+		"metadata":      true,
+		"tags":          true,
+	}
+	return allowedColumns[orderBy]
 }

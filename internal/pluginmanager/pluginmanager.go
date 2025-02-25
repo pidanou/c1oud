@@ -132,11 +132,11 @@ func (p *PluginManager) UpdatePlugin(name string) error {
 	return nil
 }
 
-func (p *PluginManager) ListPlugins() ([]plugin.Plugin, error) {
+func (p *PluginManager) ListPlugins() ([]plugin.Plugin, int, error) {
 	return p.PluginRepository.ListPlugins()
 }
 
-func (p *PluginManager) ListAccounts() ([]plugin.Account, error) {
+func (p *PluginManager) ListAccounts() ([]plugin.Account, int, error) {
 	return p.PluginRepository.ListAccounts()
 }
 
@@ -156,7 +156,7 @@ func (p *PluginManager) DeleteAccount(id int32) error {
 	return p.PluginRepository.DeleteAccount(id)
 }
 
-func (p *PluginManager) ListData(filters *types.Filter) ([]plugin.Data, error) {
+func (p *PluginManager) ListData(filters *types.Filter) ([]plugin.Data, int, error) {
 	return p.PluginRepository.ListData(filters)
 }
 
