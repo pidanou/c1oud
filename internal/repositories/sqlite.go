@@ -1,0 +1,213 @@
+package repositories
+
+import (
+	"fmt"
+
+	"github.com/jmoiron/sqlx"
+	"github.com/pidanou/c1-core/internal/constants"
+	"github.com/pidanou/c1-core/internal/types"
+	"github.com/pidanou/c1-core/pkg/plugin"
+)
+
+type SQLiteRepository struct {
+	DB *sqlx.DB
+}
+
+func NewSQLiteRepository(DB *sqlx.DB) *SQLiteRepository {
+	return &SQLiteRepository{DB: DB}
+}
+
+func (p *SQLiteRepository) ListPlugins() ([]plugin.Plugin, int, error) {
+	var plugins []plugin.Plugin
+	var count = 0
+	query := `SELECT * FROM plugins`
+	err := p.DB.Select(&plugins, query)
+	if err != nil {
+		return nil, count, err
+	}
+	query = `SELECT count(*) from plugins`
+	err = p.DB.Get(&count, query)
+	if err != nil {
+		return nil, count, err
+	}
+	return plugins, count, nil
+}
+
+func (p *SQLiteRepository) GetPlugin(name string) (*plugin.Plugin, error) {
+	var plugin plugin.Plugin
+	query := `SELECT * FROM plugins WHERE name = ? LIMIT 1`
+	err := p.DB.Get(&plugin, query, name)
+	if err != nil {
+		return nil, err
+	}
+	return &plugin, nil
+}
+
+func (p *SQLiteRepository) AddPlugin(plug *plugin.Plugin) (*plugin.Plugin, error) {
+	query := `INSERT INTO plugins (name, source, uri, install_command, update_command, command) VALUES (:name, :source, :uri, :install_command, :update_command, :command)`
+	_, err := p.DB.NamedExec(query, plug)
+	if err != nil {
+		return nil, err
+	}
+	return plug, nil
+}
+
+func (p *SQLiteRepository) DeletePlugin(name string) error {
+	query := `DELETE FROM plugins WHERE name = ?`
+	_, err := p.DB.Exec(query, name)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *SQLiteRepository) EditPlugin(plug *plugin.Plugin) (*plugin.Plugin, error) {
+	query := `UPDATE plugins set source = :source, uri = :uri, install_command = :install_command, update_command = :update_command, command = :command WHERE name = :name`
+	_, err := p.DB.NamedExec(query, plug)
+	if err != nil {
+		return nil, err
+	}
+	return plug, nil
+}
+
+func (p *SQLiteRepository) ListAccounts() ([]plugin.Account, int, error) {
+	var accounts []plugin.Account
+	var count = 0
+	query := `SELECT * FROM accounts`
+	err := p.DB.Select(&accounts, query)
+	if err != nil {
+		return nil, count, err
+	}
+	query = `SELECT count(*) from accounts`
+	err = p.DB.Get(&count, query)
+	if err != nil {
+		return nil, count, err
+	}
+	return accounts, count, nil
+}
+
+func (p *SQLiteRepository) GetAccount(id int32) (*plugin.Account, error) {
+	var account plugin.Account
+	query := `SELECT * FROM accounts WHERE id = ? LIMIT 1`
+	err := p.DB.Get(&account, query, id)
+	if err != nil {
+		return nil, err
+	}
+	return &account, nil
+}
+
+func (p *SQLiteRepository) AddAccount(acc *plugin.Account) (*plugin.Account, error) {
+	query := `INSERT INTO accounts (name, plugin) VALUES (:name, :plugin)`
+	_, err := p.DB.NamedExec(query, acc)
+	if err != nil {
+		return nil, err
+	}
+	return acc, nil
+}
+
+func (p *SQLiteRepository) EditAccount(acc *plugin.Account) (*plugin.Account, error) {
+	query := `UPDATE accounts set name = :name, plugin = :plugin, options = :options WHERE id = :id`
+	_, err := p.DB.NamedExec(query, acc)
+	if err != nil {
+		return nil, err
+	}
+	return acc, nil
+}
+
+func (p *SQLiteRepository) DeleteAccount(id int32) error {
+	query := `DELETE FROM accounts WHERE id = ?`
+	_, err := p.DB.Exec(query, id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *SQLiteRepository) AddData(data []plugin.Data) error {
+	query := `INSERT INTO data (account_id, remote_id, resource_name, plugin, uri, metadata) VALUES (:account_id, :remote_id, :resource_name, :plugin, :uri, :metadata)`
+	_, err := p.DB.NamedExec(query, data)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *SQLiteRepository) ListData(filters *types.Filter) ([]plugin.Data, int, error) {
+	var data []plugin.Data
+	var count = 0
+	query := `SELECT * FROM data WHERE 1=1`
+	countQuery := `SELECT count(*) FROM data WHERE 1=1`
+	query, countQuery, args, err := p.buildQuery(query, countQuery, filters)
+	if err != nil {
+		return nil, count, err
+	}
+	err = p.DB.Select(&data, query, args...)
+	if err != nil {
+		return nil, count, err
+	}
+	err = p.DB.Get(&count, countQuery, args...)
+	if err != nil {
+		return nil, count, err
+	}
+	return data, count, nil
+}
+
+func (p *SQLiteRepository) GetData(id int32) (*plugin.Data, error) {
+	data := &plugin.Data{}
+	query := `SELECT * FROM data WHERE id = ?`
+	err := p.DB.Get(data, query, id)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func (p *SQLiteRepository) EditData(data *plugin.Data) (*plugin.Data, error) {
+	query := `UPDATE data SET notes = :notes WHERE id = :id`
+	_, err := p.DB.NamedExec(query, data)
+	if err != nil {
+		return nil, err
+	}
+	return p.GetData(data.ID)
+}
+
+func (p *SQLiteRepository) buildQuery(baseQuery string, countQuery string, filters *types.Filter) (string, string, []interface{}, error) {
+	var args []interface{}
+	if filters == nil {
+		baseQuery += fmt.Sprintf(" ORDER BY account_id ASC, resource_name ASC LIMIT %v", constants.PageSize)
+		return baseQuery, countQuery, []interface{}{}, nil
+	}
+	if filters.Search != "" {
+		baseQuery += fmt.Sprint(" AND (resource_name ILIKE ? OR metadata ILIKE ? OR notes ILIKE ?)")
+		countQuery += fmt.Sprint(" AND (resource_name ILIKE ? OR metadata ILIKE ? OR notes ILIKE ?)")
+		args = append(args, "%"+filters.Search+"%", "%"+filters.Search+"%", "%"+filters.Search+"%", "%")
+	}
+	if filters.Accounts != nil {
+		queryPart, argsPart, _ := sqlx.In(" AND account_id in (?)", filters.Accounts)
+		baseQuery += queryPart
+		countQuery += queryPart
+		args = append(args, argsPart...)
+	}
+	if filters.Plugins != nil {
+		queryPart, argsPart, _ := sqlx.In(" AND plugin in (?)", filters.Plugins)
+		baseQuery += queryPart
+		countQuery += queryPart
+		args = append(args, argsPart...)
+	}
+	if filters.OrderBy != "" && isValidOrderBy(filters.OrderBy) {
+		baseQuery += fmt.Sprintf("%v ORDER BY %s", baseQuery, filters.OrderBy)
+	} else {
+		baseQuery += " ORDER BY account_id ASC, resource_name ASC"
+	}
+	if filters.Sort != "" && (filters.Sort == "ASC" || filters.Sort == "DESC") {
+		baseQuery += fmt.Sprint(" %v", filters.Sort)
+	}
+	baseQuery += " LIMIT 50"
+	if filters.Page != 0 {
+		baseQuery += fmt.Sprintf(" Offset %v", (filters.Page-1)*constants.PageSize)
+	}
+	baseQuery = p.DB.Rebind(baseQuery)
+	countQuery = p.DB.Rebind(countQuery)
+	fmt.Println(baseQuery)
+	return baseQuery, countQuery, args, nil
+}
