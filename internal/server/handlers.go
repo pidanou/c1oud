@@ -147,27 +147,23 @@ func (h *Handler) PutData(c echo.Context) error {
 }
 
 func (h *Handler) PostDataSync(c echo.Context) error {
-	accounts, _, err := h.PluginManager.ListAccounts()
-	if err != nil {
-		log.Println(err)
-	}
+	form, _ := c.FormParams()
 
+	accounts := form["account_id"]
 	accountIDs := []int32{}
 	for _, acc := range accounts {
-		accountIDs = append(accountIDs, acc.ID)
+		accInt, _ := strconv.Atoi(acc)
+		accountIDs = append(accountIDs, int32(accInt))
 	}
 
-	err = h.PluginManager.Execute(accountIDs)
+	err := h.PluginManager.Execute(accountIDs)
 	if err != nil {
+		c.Response().Header().Set("Hx-Trigger", `{"add-toast": {"message": "Failed to synced data", "type": "warning"}}`)
 		return c.NoContent(http.StatusInternalServerError)
 	}
 
-	data, _, err := h.PluginManager.ListData(nil)
-	if err != nil {
-		log.Println(err)
-	}
-
-	return Render(c, http.StatusOK, ui.DataTableBody(accounts, data))
+	c.Response().Header().Set("Hx-Trigger", `{"add-toast": {"message": "Succesfully synced data", "type": "info"}}`)
+	return c.NoContent(http.StatusOK)
 }
 
 func (h *Handler) GetAccountsPage(c echo.Context) error {

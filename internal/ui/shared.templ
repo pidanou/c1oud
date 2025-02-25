@@ -17,6 +17,7 @@ templ spinner(size int, id string, class string) {
 templ Toast() {
 	<style>
 .toaster {
+    background-color: var(--pico-background-color);
     position: fixed;
     display: block;
     z-index: 999;
@@ -31,7 +32,8 @@ templ Toast() {
 }
 
 .toaster-content {
-  position: relative;
+    background-color: var(--pico-background-color);
+    position: relative;
     border: 1px solid; 
     border-radius: 0.5rem; 
     padding: 1.75rem; 
