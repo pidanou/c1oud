@@ -97,7 +97,7 @@ func (p *PostgresRepository) GetAccount(id int32) (*connector.Account, error) {
 }
 
 func (p *PostgresRepository) AddAccount(acc *connector.Account) (*connector.Account, error) {
-	query := `INSERT INTO accounts (name, connector) VALUES (:name, :connector)`
+	query := `INSERT INTO accounts (name, connector, options) VALUES (:name, :connector, :options)`
 	_, err := p.DB.NamedExec(query, acc)
 	if err != nil {
 		return nil, err
@@ -124,7 +124,12 @@ func (p *PostgresRepository) DeleteAccount(id int32) error {
 }
 
 func (p *PostgresRepository) AddData(data []connector.Data) error {
-	query := `INSERT INTO data (account_id, remote_id, resource_name, connector, uri, metadata) VALUES (:account_id, :remote_id, :resource_name, :connector, :uri, :metadata)`
+	query := `INSERT INTO data (account_id, remote_id, resource_name, connector, uri, metadata) VALUES (:account_id, :remote_id, :resource_name, :connector, :uri, :metadata) ON CONFLICT (remote_id, account_id) 
+	DO UPDATE SET 
+		resource_name = EXCLUDED.resource_name,
+		connector = EXCLUDED.connector,
+		uri = EXCLUDED.uri,
+		metadata = EXCLUDED.metadata`
 	_, err := p.DB.NamedExec(query, data)
 	if err != nil {
 		return err

@@ -22,6 +22,8 @@ This application supports a connector system that allows external connectors to 
 
 To create a connector, you need to build an application that:
 
+### Overview
+
 - Starts a **gRPC server**.
 - Registers a `Sync` method, which implements the expected interface. The main app will send options to the connector. The connector developers should give the users the documentation of their connector and the required options that the user should provide and in which format. The app will send a raw string to the connector.
 - Uses the callback function to **send paginated data** back to the main application.
@@ -32,3 +34,8 @@ For detailed examples, refer to:
 
 - The [`pkg/connector`](.) directory in this repository.
 - The official **[HashiCorp go-plugin](https://github.com/hashicorp/go-plugin)** documentation.
+
+### Behaviour
+
+A connector can return any data as long as it is in the format of a list of `DataObject` messages. Connectors need to parse the options.
+The data returned by the connector will be upserted in the database using the `RemoteID` field.

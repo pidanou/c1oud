@@ -86,7 +86,10 @@ func (p *ConnectorManager) sync(accountID int32) error {
 
 	gRPCClient, err := client.Client()
 	if err != nil {
-		log.Println(err)
+		log.Println("cannot get client ", err)
+	}
+	if gRPCClient == nil {
+		return errors.New("no connector client")
 	}
 
 	raw, err := gRPCClient.Dispense("connector")

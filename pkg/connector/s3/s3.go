@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -24,11 +23,6 @@ type Options struct {
 	Profile string   `json:"profile"`
 	Buckets []string `json:"buckets"`
 	Region  string   `json:"region"`
-}
-
-func (o Options) String() string {
-	buckets := strings.Join(o.Buckets, ",")
-	return fmt.Sprint("profile: ", o.Profile, "maxkeys: ", "buckets: ", buckets)
 }
 
 func (s *S3Connector) Sync(options string, cb connector.CallbackHandler) error {

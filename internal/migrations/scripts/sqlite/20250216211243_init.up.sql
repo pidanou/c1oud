@@ -25,5 +25,6 @@ CREATE TABLE data (
   resource_name TEXT NOT NULL DEFAULT '',
   uri TEXT NOT NULL DEFAULT '',
   metadata TEXT NOT NULL DEFAULT '',
-  notes TEXT NOT NULL DEFAULT ''
+  notes TEXT NOT NULL DEFAULT '',
+  UNIQUE (account_id, remote_id)
 );
