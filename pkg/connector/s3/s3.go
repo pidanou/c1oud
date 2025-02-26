@@ -10,9 +10,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/hashicorp/go-hclog"
-	goplugin "github.com/hashicorp/go-plugin"
-	"github.com/pidanou/c1-core/pkg/plugin"
-	"github.com/pidanou/c1-core/pkg/plugin/proto"
+	"github.com/hashicorp/go-plugin"
+	"github.com/pidanou/c1-core/pkg/connector"
+	"github.com/pidanou/c1-core/pkg/connector/proto"
 )
 
 type S3Connector struct {
@@ -23,6 +23,7 @@ type S3Connector struct {
 type Options struct {
 	Profile string   `json:"profile"`
 	Buckets []string `json:"buckets"`
+	Region  string   `json:"region"`
 }
 
 func (o Options) String() string {
@@ -30,7 +31,7 @@ func (o Options) String() string {
 	return fmt.Sprint("profile: ", o.Profile, "maxkeys: ", "buckets: ", buckets)
 }
 
-func (s *S3Connector) Sync(options string, cb plugin.CallbackHandler) error {
+func (s *S3Connector) Sync(options string, cb connector.CallbackHandler) error {
 
 	var opts Options
 
@@ -40,6 +41,7 @@ func (s *S3Connector) Sync(options string, cb plugin.CallbackHandler) error {
 	}
 
 	cfg, err := config.LoadDefaultConfig(context.TODO(),
+		config.WithRegion(opts.Region),
 		config.WithSharedConfigProfile(opts.Profile),
 	)
 
@@ -80,7 +82,7 @@ func (s *S3Connector) listBuckets() ([]string, error) {
 	return res, nil
 }
 
-func (s *S3Connector) listObjects(bucket string, opts Options, cb plugin.CallbackHandler) {
+func (s *S3Connector) listObjects(bucket string, opts Options, cb connector.CallbackHandler) {
 	params := &s3.ListObjectsV2Input{
 		Bucket: &bucket,
 	}
@@ -112,7 +114,7 @@ func (s *S3Connector) listObjects(bucket string, opts Options, cb plugin.Callbac
 	}
 }
 
-var handshakeConfig = goplugin.HandshakeConfig{
+var handshakeConfig = plugin.HandshakeConfig{
 	ProtocolVersion:  1,
 	MagicCookieKey:   "BASIC_PLUGIN",
 	MagicCookieValue: "hello",
@@ -125,16 +127,16 @@ func main() {
 		JSONFormat: true,
 	})
 
-	connector := &S3Connector{
+	conn := &S3Connector{
 		logger: logger,
 	}
-	var pluginMap = map[string]goplugin.Plugin{
-		"connector": &plugin.ConnectorGRPCPlugin{Impl: connector},
+	var pluginMap = map[string]plugin.Plugin{
+		"connector": &connector.ConnectorGRPCPlugin{Impl: conn},
 	}
 
-	goplugin.Serve(&goplugin.ServeConfig{
+	plugin.Serve(&plugin.ServeConfig{
 		HandshakeConfig: handshakeConfig,
 		Plugins:         pluginMap,
-		GRPCServer:      goplugin.DefaultGRPCServer,
+		GRPCServer:      plugin.DefaultGRPCServer,
 	})
 }

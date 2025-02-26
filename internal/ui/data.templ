@@ -2,10 +2,10 @@ package ui
 
 import (
 	"fmt"
-	"github.com/pidanou/c1-core/pkg/plugin"
+	"github.com/pidanou/c1-core/pkg/connector"
 )
 
-templ DataPage(accounts []plugin.Account, data []plugin.Data, plugins []plugin.Plugin, page int, count int) {
+templ DataPage(accounts []connector.Account, data []connector.Data, connectors []connector.Connector, page int, count int) {
 	<style>
 @keyframes spin {
   100% {
@@ -50,10 +50,10 @@ templ DataPage(accounts []plugin.Account, data []plugin.Data, plugins []plugin.P
 						}
 					</fieldset>
 					<fieldset>
-						<legend>Plugins:</legend>
-						for _, plg := range plugins {
+						<legend>Connectors:</legend>
+						for _, plg := range connectors {
 							<label>
-								<input type="checkbox" name="plugin" value={ plg.Name } hx-get="/partials/data" hx-include="#filters, #search" hx-target="#data-table-body" hx-swap="outerHTML"/>
+								<input type="checkbox" name="connector" value={ plg.Name } hx-get="/partials/data" hx-include="#filters, #search" hx-target="#data-table-body" hx-swap="outerHTML"/>
 								{ plg.Name }
 							</label>
 						}
@@ -72,7 +72,7 @@ templ DataPage(accounts []plugin.Account, data []plugin.Data, plugins []plugin.P
 					<table style="width: 100%; font-size: small">
 						<thead style="width: 100vw">
 							<tr>
-								<th scope="col">Plugin</th>
+								<th scope="col">Connector</th>
 								<th scope="col">Account</th>
 								<th scope="col">Resource name</th>
 								<th scope="col">Metadata</th>
@@ -88,7 +88,7 @@ templ DataPage(accounts []plugin.Account, data []plugin.Data, plugins []plugin.P
 	}
 }
 
-templ DataTableBody(accounts []plugin.Account, data []plugin.Data) {
+templ DataTableBody(accounts []connector.Account, data []connector.Data) {
 	<tbody id="data-table-body" hx-target="closest tr" hx-swap="outerHTML" style="width: 100vw">
 		for _, row:=range data {
 			@DataRow(&row, findAccountByID(accounts, row.AccountID), false)
@@ -96,22 +96,22 @@ templ DataTableBody(accounts []plugin.Account, data []plugin.Data) {
 	</tbody>
 }
 
-func findAccountByID(list []plugin.Account, id int32) *plugin.Account {
+func findAccountByID(list []connector.Account, id int32) *connector.Account {
 	for _, item := range list {
 		if item.ID == id {
 			return &item
 		}
 	}
-	return &plugin.Account{}
+	return &connector.Account{}
 }
 
-templ DataRow(data *plugin.Data, acc *plugin.Account, edit bool) {
+templ DataRow(data *connector.Data, acc *connector.Account, edit bool) {
 	<style>
 td {word-wrap: break-word}
   </style>
 	if edit {
 		<tr>
-			<td>{ data.Plugin }</td>
+			<td>{ data.Connector }</td>
 			<td>{ acc.Name }</td>
 			<td>{ data.ResourceName }</td>
 			<td>{ data.Metadata }</td>
@@ -124,7 +124,7 @@ td {word-wrap: break-word}
 		</tr>
 	} else {
 		<tr>
-			<td>{ data.Plugin }</td>
+			<td>{ data.Connector }</td>
 			<td>{ acc.Name }</td>
 			<td><a href={ templ.URL(data.URI) } target="_blank">{ data.ResourceName }</a></td>
 			<td>{ data.Metadata }</td>

@@ -1,8 +1,7 @@
-package pluginmanager
+package connectormanager
 
 import (
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -13,8 +12,8 @@ import (
 	"github.com/hashicorp/go-plugin"
 	"github.com/pidanou/c1-core/internal/constants"
 	"github.com/pidanou/c1-core/internal/repositories"
-	plug "github.com/pidanou/c1-core/pkg/plugin"
-	"github.com/pidanou/c1-core/pkg/plugin/proto"
+	"github.com/pidanou/c1-core/pkg/connector"
+	"github.com/pidanou/c1-core/pkg/connector/proto"
 )
 
 var handshakeConfig = plugin.HandshakeConfig{
@@ -25,10 +24,10 @@ var handshakeConfig = plugin.HandshakeConfig{
 
 // pluginMap is the map of plugins we can dispense.
 var pluginMap = map[string]plugin.Plugin{
-	"connector": &plug.ConnectorGRPCPlugin{},
+	"connector": &connector.ConnectorGRPCPlugin{},
 }
 
-func (p *PluginManager) Execute(accountIDs []int32) error {
+func (p *ConnectorManager) Execute(accountIDs []int32) error {
 	results := make(chan error, len(accountIDs))
 	var wg sync.WaitGroup
 
@@ -61,9 +60,9 @@ func (p *PluginManager) Execute(accountIDs []int32) error {
 	return nil
 }
 
-func (p *PluginManager) sync(accountID int32) error {
+func (p *ConnectorManager) sync(accountID int32) error {
 	logger := hclog.New(&hclog.LoggerOptions{
-		Name:   "plugin",
+		Name:   "connector",
 		Output: os.Stdout,
 		Level:  hclog.Info,
 	})
@@ -72,7 +71,7 @@ func (p *PluginManager) sync(accountID int32) error {
 	if err != nil {
 		return err
 	}
-	pl, _ := p.PluginRepository.GetPlugin(acc.Plugin)
+	pl, _ := p.ConnectorRepository.GetConnector(acc.Connector)
 	cmd := exec.Command("sh", "-c", pl.Command)
 	cmd.Dir = path.Join(constants.Envs["C1_DIR"], pl.Name)
 	client := plugin.NewClient(&plugin.ClientConfig{
@@ -94,10 +93,9 @@ func (p *PluginManager) sync(accountID int32) error {
 	if err != nil {
 		log.Println(err)
 	}
-	fmt.Println(acc.ID)
 
-	connector := raw.(plug.Connector)
-	err = connector.Sync(acc.Options, &callbackHandler{AccountID: acc.ID, Plugin: pl.Name, DataRepository: p.PluginRepository})
+	conn := raw.(connector.ConnectorInterface)
+	err = conn.Sync(acc.Options, &callbackHandler{AccountID: acc.ID, Connector: pl.Name, DataRepository: p.ConnectorRepository})
 	if err != nil {
 		return err
 	}
@@ -107,14 +105,14 @@ func (p *PluginManager) sync(accountID int32) error {
 
 type callbackHandler struct {
 	AccountID      int32
-	Plugin         string
-	DataRepository repositories.PluginRepository
+	Connector      string
+	DataRepository repositories.ConnectorRepository
 }
 
 func (c *callbackHandler) Callback(res *proto.SyncResponse) (*proto.Empty, error) {
-	data := []plug.Data{}
+	data := []connector.Data{}
 	for _, obj := range res.Response {
-		d := plug.Data{AccountID: c.AccountID, RemoteID: obj.RemoteId, Plugin: c.Plugin, ResourceName: obj.ResourceName, URI: obj.Uri, Metadata: obj.Metadata}
+		d := connector.Data{AccountID: c.AccountID, RemoteID: obj.RemoteId, Connector: c.Connector, ResourceName: obj.ResourceName, URI: obj.Uri, Metadata: obj.Metadata}
 		data = append(data, d)
 	}
 	err := c.DataRepository.AddData(data)

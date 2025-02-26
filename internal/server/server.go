@@ -8,14 +8,14 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
-	"github.com/pidanou/c1-core/internal/pluginmanager"
+	"github.com/pidanou/c1-core/internal/connectormanager"
 	"github.com/pidanou/c1-core/internal/repositories"
 	"github.com/pidanou/c1-core/internal/ui"
 )
 
 type Server struct {
-	DB            *sqlx.DB
-	PluginManager *pluginmanager.PluginManager
+	DB               *sqlx.DB
+	ConnectorManager *connectormanager.ConnectorManager
 }
 
 func getFileSystem(useOS bool, embededFiles embed.FS) http.FileSystem {
@@ -32,7 +32,7 @@ func getFileSystem(useOS bool, embededFiles embed.FS) http.FileSystem {
 }
 
 func (s *Server) Start() error {
-	h := &Handler{PluginManager: *pluginmanager.NewPluginManager(repositories.NewPostgresRepository(s.DB))}
+	h := &Handler{ConnectorManager: *connectormanager.NewConnectorManager(repositories.NewPostgresRepository(s.DB))}
 
 	e := echo.New()
 	e.HideBanner = true
@@ -48,9 +48,9 @@ func (s *Server) Start() error {
 	e.GET("/accounts", h.GetAccountsPage)
 	e.GET("/account/new", h.GetNewAccountPage)
 	e.POST("/account", h.PostAccount)
-	e.GET("/plugins", h.GetPluginsPage)
-	e.GET("/plugin/new", h.GetNewPluginPage)
-	e.POST("/plugin", h.PostPlugin)
+	e.GET("/connectors", h.GetConnectorsPage)
+	e.GET("/connector/new", h.GetNewConnectorPage)
+	e.POST("/connector", h.PostConnector)
 
 	partials := e.Group("/partials")
 
@@ -59,11 +59,11 @@ func (s *Server) Start() error {
 	partials.PUT("/data/:id", h.PutData)
 	partials.POST("/data/sync", h.PostDataSync)
 
-	partials.GET("/plugin/:name/edit", h.GetEditPluginRow)
-	partials.GET("/plugin/:name", h.GetPluginRow)
-	partials.DELETE("/plugin/:name", h.DeletePlugin)
-	partials.PUT("/plugin/:name", h.PutPlugin)
-	partials.POST("/plugin/:name/update", h.PostPluginUpdate)
+	partials.GET("/connector/:name/edit", h.GetEditConnectorRow)
+	partials.GET("/connector/:name", h.GetConnectorRow)
+	partials.DELETE("/connector/:name", h.DeleteConnector)
+	partials.PUT("/connector/:name", h.PutConnector)
+	partials.POST("/connector/:name/update", h.PostConnectorUpdate)
 
 	partials.GET("/account/:id/edit", h.GetEditAccountRow)
 	partials.GET("/account/:id", h.GetAccountRow)

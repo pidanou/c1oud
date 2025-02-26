@@ -1,11 +1,10 @@
-package plugin
+package connector
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hashicorp/go-plugin"
-	"github.com/pidanou/c1-core/pkg/plugin/proto"
+	"github.com/pidanou/c1-core/pkg/connector/proto"
 	"google.golang.org/grpc"
 )
 
@@ -17,7 +16,7 @@ import (
 // 5. Returns errors if any to the client
 
 // Plugins need to implement this interface
-type Connector interface {
+type ConnectorInterface interface {
 	Sync(options string, c CallbackHandler) error
 }
 
@@ -42,9 +41,6 @@ func (g *GRPCConnectorClient) Sync(options string, c CallbackHandler) error {
 		return s
 	}
 
-	if g.broker == nil {
-		fmt.Println("is nil")
-	}
 	brokerID := g.broker.NextId()
 	go g.broker.AcceptAndServe(brokerID, serverFunc)
 	_, err := g.client.Sync(context.Background(), &proto.SyncRequest{
@@ -57,7 +53,7 @@ func (g *GRPCConnectorClient) Sync(options string, c CallbackHandler) error {
 // GRPC Server: started by go-plugin to listen to client RPC calls for the plugin
 type ConnectorGRPCServer struct {
 	proto.UnimplementedConnectorServer
-	Impl   Connector
+	Impl   ConnectorInterface
 	broker *plugin.GRPCBroker
 }
 
@@ -76,7 +72,7 @@ func (s *ConnectorGRPCServer) Sync(ctx context.Context,
 // Connector plugin over GRPC
 type ConnectorGRPCPlugin struct {
 	plugin.Plugin
-	Impl Connector
+	Impl ConnectorInterface
 }
 
 // Build a GRPC Server for the ConnectorGRPC plugin. This server will run the plugin

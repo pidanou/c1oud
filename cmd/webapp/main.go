@@ -11,9 +11,9 @@ import (
 	"github.com/golang-migrate/migrate/v4/database/sqlite"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
 	"github.com/jmoiron/sqlx"
+	"github.com/pidanou/c1-core/internal/connectormanager"
 	"github.com/pidanou/c1-core/internal/constants"
 	"github.com/pidanou/c1-core/internal/migrations"
-	"github.com/pidanou/c1-core/internal/pluginmanager"
 	"github.com/pidanou/c1-core/internal/repositories"
 	"github.com/pidanou/c1-core/internal/server"
 
@@ -40,14 +40,14 @@ func main() {
 	}
 	defer db.Close()
 
-	pluginManager := &pluginmanager.PluginManager{}
+	connectorManager := &connectormanager.ConnectorManager{}
 	if dbEngine != "sqlite" {
-		pluginManager = pluginmanager.NewPluginManager(repositories.NewPostgresRepository(db))
+		connectorManager = connectormanager.NewConnectorManager(repositories.NewPostgresRepository(db))
 	} else {
-		pluginManager = pluginmanager.NewPluginManager(repositories.NewSQLiteRepository(db))
+		connectorManager = connectormanager.NewConnectorManager(repositories.NewSQLiteRepository(db))
 	}
 
-	app := &server.Server{PluginManager: pluginManager, DB: db}
+	app := &server.Server{ConnectorManager: connectorManager, DB: db}
 	app.Start()
 }
 

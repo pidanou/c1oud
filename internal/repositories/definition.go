@@ -2,22 +2,22 @@ package repositories
 
 import (
 	"github.com/pidanou/c1-core/internal/types"
-	"github.com/pidanou/c1-core/pkg/plugin"
+	"github.com/pidanou/c1-core/pkg/connector"
 )
 
-type PluginRepository interface {
-	ListPlugins() (res []plugin.Plugin, count int, err error)
-	GetPlugin(name string) (*plugin.Plugin, error)
-	AddPlugin(*plugin.Plugin) (*plugin.Plugin, error)
-	EditPlugin(*plugin.Plugin) (*plugin.Plugin, error)
-	DeletePlugin(name string) error
-	ListAccounts() (res []plugin.Account, count int, err error)
-	GetAccount(id int32) (*plugin.Account, error)
-	AddAccount(*plugin.Account) (*plugin.Account, error)
-	EditAccount(*plugin.Account) (*plugin.Account, error)
+type ConnectorRepository interface {
+	ListConnectors() (res []connector.Connector, count int, err error)
+	GetConnector(name string) (*connector.Connector, error)
+	AddConnector(*connector.Connector) (*connector.Connector, error)
+	EditConnector(*connector.Connector) (*connector.Connector, error)
+	DeleteConnector(name string) error
+	ListAccounts() (res []connector.Account, count int, err error)
+	GetAccount(id int32) (*connector.Account, error)
+	AddAccount(*connector.Account) (*connector.Account, error)
+	EditAccount(*connector.Account) (*connector.Account, error)
 	DeleteAccount(id int32) error
-	ListData(filters *types.Filter) (res []plugin.Data, count int, err error)
-	AddData([]plugin.Data) error
-	GetData(id int32) (*plugin.Data, error)
-	EditData(*plugin.Data) (*plugin.Data, error)
+	ListData(filters *types.Filter) (res []connector.Data, count int, err error)
+	AddData([]connector.Data) error
+	GetData(id int32) (*connector.Data, error)
+	EditData(*connector.Data) (*connector.Data, error)
 }

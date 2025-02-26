@@ -1,4 +1,4 @@
-package pluginmanager
+package connectormanager
 
 import (
 	"fmt"
@@ -11,25 +11,25 @@ import (
 	"strings"
 
 	"github.com/pidanou/c1-core/internal/constants"
-	"github.com/pidanou/c1-core/pkg/plugin"
+	"github.com/pidanou/c1-core/pkg/connector"
 )
 
-func downloadFromVCS(plug *plugin.Plugin) error {
-	downloadPath := path.Join(constants.Envs["C1_DIR"], plug.Name)
+func downloadFromVCS(conn *connector.Connector) error {
+	downloadPath := path.Join(constants.Envs["C1_DIR"], conn.Name)
 	err := os.MkdirAll(downloadPath, 0755)
 	if err != nil {
 		return err
 	}
 
-	cmd := exec.Command("git", "clone", plug.URI, ".")
+	cmd := exec.Command("git", "clone", conn.URI, ".")
 	cmd.Dir = downloadPath
 	err = cmd.Run()
 	if err != nil {
 		return err
 	}
 
-	if plug.InstallCommand != "" {
-		cmd := exec.Command("sh", "-c", plug.InstallCommand)
+	if conn.InstallCommand != "" {
+		cmd := exec.Command("sh", "-c", conn.InstallCommand)
 		cmd.Dir = downloadPath
 		err := cmd.Run()
 		if err != nil {
@@ -41,17 +41,17 @@ func downloadFromVCS(plug *plugin.Plugin) error {
 	return nil
 }
 
-func updateFromVCS(plug *plugin.Plugin) error {
-	if plug.UpdateCommand != "" {
-		cmd := exec.Command("sh", "-c", plug.UpdateCommand)
-		cmd.Dir = path.Join(constants.Envs["C1_DIR"], plug.Name)
+func updateFromVCS(conn *connector.Connector) error {
+	if conn.UpdateCommand != "" {
+		cmd := exec.Command("sh", "-c", conn.UpdateCommand)
+		cmd.Dir = path.Join(constants.Envs["C1_DIR"], conn.Name)
 		if err := cmd.Run(); err != nil {
 			return err
 		}
 		return nil
 	}
 
-	repoPath := path.Join(constants.Envs["C1_DIR"], plug.Name)
+	repoPath := path.Join(constants.Envs["C1_DIR"], conn.Name)
 
 	cmd := exec.Command("git", "pull", "origin", "HEAD")
 	cmd.Dir = repoPath
@@ -63,10 +63,10 @@ func updateFromVCS(plug *plugin.Plugin) error {
 	return err
 }
 
-func downloadFromHTTP(plug *plugin.Plugin) error {
-	parts := strings.Split(plug.URI, "/")
+func downloadFromHTTP(conn *connector.Connector) error {
+	parts := strings.Split(conn.URI, "/")
 	resourceName := parts[len(parts)-1]
-	downloadDir := path.Join(constants.Envs["C1_DIR"], plug.Name)
+	downloadDir := path.Join(constants.Envs["C1_DIR"], conn.Name)
 	err := os.MkdirAll(downloadDir, 0755)
 	out, err := os.Create(path.Join(downloadDir, resourceName))
 	if err != nil {
@@ -74,7 +74,7 @@ func downloadFromHTTP(plug *plugin.Plugin) error {
 	}
 	defer out.Close()
 
-	resp, err := http.Get(plug.URI)
+	resp, err := http.Get(conn.URI)
 	if err != nil {
 		return fmt.Errorf("failed to download file: %w", err)
 	}
@@ -85,8 +85,8 @@ func downloadFromHTTP(plug *plugin.Plugin) error {
 		return fmt.Errorf("failed to save file: %w", err)
 	}
 
-	if plug.InstallCommand != "" {
-		cmd := exec.Command("sh", "-c", plug.InstallCommand)
+	if conn.InstallCommand != "" {
+		cmd := exec.Command("sh", "-c", conn.InstallCommand)
 		cmd.Dir = downloadDir
 		err := cmd.Run()
 		if err != nil {
@@ -98,54 +98,54 @@ func downloadFromHTTP(plug *plugin.Plugin) error {
 	return nil
 }
 
-func updateFromHTTP(plug *plugin.Plugin) error {
-	if plug.UpdateCommand == "" {
-		err := DeletePlugin(plug.Name)
+func updateFromHTTP(conn *connector.Connector) error {
+	if conn.UpdateCommand == "" {
+		err := DeleteConnector(conn.Name)
 		if err != nil {
 			return err
 		}
-		return downloadFromHTTP(plug)
+		return downloadFromHTTP(conn)
 	}
 
-	cmd := exec.Command("sh", "-c", plug.UpdateCommand)
-	cmd.Dir = path.Join(constants.Envs["C1_DIR"], plug.Name)
+	cmd := exec.Command("sh", "-c", conn.UpdateCommand)
+	cmd.Dir = path.Join(constants.Envs["C1_DIR"], conn.Name)
 	if err := cmd.Run(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func downloadFromLocal(plug *plugin.Plugin) error {
-	downloadDir := path.Join(constants.Envs["C1_DIR"], plug.Name)
+func downloadFromLocal(conn *connector.Connector) error {
+	downloadDir := path.Join(constants.Envs["C1_DIR"], conn.Name)
 	err := os.MkdirAll(downloadDir, 0755)
 	if err != nil {
 		return err
 	}
 
-	parts := strings.Split(plug.URI, "/")
+	parts := strings.Split(conn.URI, "/")
 	fileName := parts[len(parts)-1]
 
-	info, err := os.Stat(plug.URI)
+	info, err := os.Stat(conn.URI)
 	if err != nil {
 		return err
 	}
 
 	if info.IsDir() {
-		err := copyDir(plug.URI, downloadDir)
+		err := copyDir(conn.URI, downloadDir)
 		if err != nil {
 			return err
 		}
 	}
 
 	if info.Mode().IsRegular() {
-		err := copyFile(plug.URI, path.Join(downloadDir, fileName))
+		err := copyFile(conn.URI, path.Join(downloadDir, fileName))
 		if err != nil {
 			return err
 		}
 	}
 
-	if plug.InstallCommand != "" {
-		cmd := exec.Command("sh", "-c", plug.InstallCommand)
+	if conn.InstallCommand != "" {
+		cmd := exec.Command("sh", "-c", conn.InstallCommand)
 		cmd.Dir = downloadDir
 		out, err := cmd.CombinedOutput()
 		if err != nil {
@@ -162,17 +162,17 @@ func downloadFromLocal(plug *plugin.Plugin) error {
 	return nil
 }
 
-func updateFromLocal(plug *plugin.Plugin) error {
-	if plug.UpdateCommand == "" {
-		err := DeletePlugin(plug.Name)
+func updateFromLocal(conn *connector.Connector) error {
+	if conn.UpdateCommand == "" {
+		err := DeleteConnector(conn.Name)
 		if err != nil {
 			return err
 		}
-		return downloadFromLocal(plug)
+		return downloadFromLocal(conn)
 	}
 
-	cmd := exec.Command("sh", "-c", plug.UpdateCommand)
-	cmd.Dir = path.Join(constants.Envs["C1_DIR"], plug.Name)
+	cmd := exec.Command("sh", "-c", conn.UpdateCommand)
+	cmd.Dir = path.Join(constants.Envs["C1_DIR"], conn.Name)
 	if err := cmd.Run(); err != nil {
 		return err
 	}
@@ -236,6 +236,6 @@ func copyFile(src, dst string) error {
 	return nil
 }
 
-func DeletePlugin(name string) error {
+func DeleteConnector(name string) error {
 	return os.RemoveAll(path.Join(constants.Envs["C1_DIR"], name))
 }

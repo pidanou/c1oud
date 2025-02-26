@@ -1,11 +1,11 @@
-# Plugin README
+# Connector README
 
 ## Installation
 
-To install this plugin, you have two options:
+To install this connector, you have two options:
 
 1. **Copy the JSON below**.
-2. **Paste the link** to the JSON configuration file into the plugin's setup interface.
+2. **Paste the link** to the JSON configuration file into the connector's setup interface.
 
 ## JSON Configuration Example
 
@@ -19,4 +19,4 @@ To install this plugin, you have two options:
 ### Options Explained:
 
 - profile: the profile in your `.aws/credentials` file. If not given, will try to use `default`.
-- buckets: List of buckets to sync. Default to all buckets of the account.
+- buckets: List of buckets to sync. **Required**

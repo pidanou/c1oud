@@ -6,7 +6,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/pidanou/c1-core/internal/constants"
 	"github.com/pidanou/c1-core/internal/types"
-	"github.com/pidanou/c1-core/pkg/plugin"
+	"github.com/pidanou/c1-core/pkg/connector"
 )
 
 type SQLiteRepository struct {
@@ -17,34 +17,34 @@ func NewSQLiteRepository(DB *sqlx.DB) *SQLiteRepository {
 	return &SQLiteRepository{DB: DB}
 }
 
-func (p *SQLiteRepository) ListPlugins() ([]plugin.Plugin, int, error) {
-	var plugins []plugin.Plugin
+func (p *SQLiteRepository) ListConnectors() ([]connector.Connector, int, error) {
+	var connectors []connector.Connector
 	var count = 0
-	query := `SELECT * FROM plugins`
-	err := p.DB.Select(&plugins, query)
+	query := `SELECT * FROM connectors`
+	err := p.DB.Select(&connectors, query)
 	if err != nil {
 		return nil, count, err
 	}
-	query = `SELECT count(*) from plugins`
+	query = `SELECT count(*) from connectors`
 	err = p.DB.Get(&count, query)
 	if err != nil {
 		return nil, count, err
 	}
-	return plugins, count, nil
+	return connectors, count, nil
 }
 
-func (p *SQLiteRepository) GetPlugin(name string) (*plugin.Plugin, error) {
-	var plugin plugin.Plugin
-	query := `SELECT * FROM plugins WHERE name = ? LIMIT 1`
-	err := p.DB.Get(&plugin, query, name)
+func (p *SQLiteRepository) GetConnector(name string) (*connector.Connector, error) {
+	var connector connector.Connector
+	query := `SELECT * FROM connectors WHERE name = ? LIMIT 1`
+	err := p.DB.Get(&connector, query, name)
 	if err != nil {
 		return nil, err
 	}
-	return &plugin, nil
+	return &connector, nil
 }
 
-func (p *SQLiteRepository) AddPlugin(plug *plugin.Plugin) (*plugin.Plugin, error) {
-	query := `INSERT INTO plugins (name, source, uri, install_command, update_command, command) VALUES (:name, :source, :uri, :install_command, :update_command, :command)`
+func (p *SQLiteRepository) AddConnector(plug *connector.Connector) (*connector.Connector, error) {
+	query := `INSERT INTO connectors (name, source, uri, install_command, update_command, command) VALUES (:name, :source, :uri, :install_command, :update_command, :command)`
 	_, err := p.DB.NamedExec(query, plug)
 	if err != nil {
 		return nil, err
@@ -52,8 +52,8 @@ func (p *SQLiteRepository) AddPlugin(plug *plugin.Plugin) (*plugin.Plugin, error
 	return plug, nil
 }
 
-func (p *SQLiteRepository) DeletePlugin(name string) error {
-	query := `DELETE FROM plugins WHERE name = ?`
+func (p *SQLiteRepository) DeleteConnector(name string) error {
+	query := `DELETE FROM connectors WHERE name = ?`
 	_, err := p.DB.Exec(query, name)
 	if err != nil {
 		return err
@@ -61,8 +61,8 @@ func (p *SQLiteRepository) DeletePlugin(name string) error {
 	return nil
 }
 
-func (p *SQLiteRepository) EditPlugin(plug *plugin.Plugin) (*plugin.Plugin, error) {
-	query := `UPDATE plugins set source = :source, uri = :uri, install_command = :install_command, update_command = :update_command, command = :command WHERE name = :name`
+func (p *SQLiteRepository) EditConnector(plug *connector.Connector) (*connector.Connector, error) {
+	query := `UPDATE connectors set source = :source, uri = :uri, install_command = :install_command, update_command = :update_command, command = :command WHERE name = :name`
 	_, err := p.DB.NamedExec(query, plug)
 	if err != nil {
 		return nil, err
@@ -70,8 +70,8 @@ func (p *SQLiteRepository) EditPlugin(plug *plugin.Plugin) (*plugin.Plugin, erro
 	return plug, nil
 }
 
-func (p *SQLiteRepository) ListAccounts() ([]plugin.Account, int, error) {
-	var accounts []plugin.Account
+func (p *SQLiteRepository) ListAccounts() ([]connector.Account, int, error) {
+	var accounts []connector.Account
 	var count = 0
 	query := `SELECT * FROM accounts`
 	err := p.DB.Select(&accounts, query)
@@ -86,8 +86,8 @@ func (p *SQLiteRepository) ListAccounts() ([]plugin.Account, int, error) {
 	return accounts, count, nil
 }
 
-func (p *SQLiteRepository) GetAccount(id int32) (*plugin.Account, error) {
-	var account plugin.Account
+func (p *SQLiteRepository) GetAccount(id int32) (*connector.Account, error) {
+	var account connector.Account
 	query := `SELECT * FROM accounts WHERE id = ? LIMIT 1`
 	err := p.DB.Get(&account, query, id)
 	if err != nil {
@@ -96,8 +96,8 @@ func (p *SQLiteRepository) GetAccount(id int32) (*plugin.Account, error) {
 	return &account, nil
 }
 
-func (p *SQLiteRepository) AddAccount(acc *plugin.Account) (*plugin.Account, error) {
-	query := `INSERT INTO accounts (name, plugin) VALUES (:name, :plugin)`
+func (p *SQLiteRepository) AddAccount(acc *connector.Account) (*connector.Account, error) {
+	query := `INSERT INTO accounts (name, connector) VALUES (:name, :connector)`
 	_, err := p.DB.NamedExec(query, acc)
 	if err != nil {
 		return nil, err
@@ -105,8 +105,8 @@ func (p *SQLiteRepository) AddAccount(acc *plugin.Account) (*plugin.Account, err
 	return acc, nil
 }
 
-func (p *SQLiteRepository) EditAccount(acc *plugin.Account) (*plugin.Account, error) {
-	query := `UPDATE accounts set name = :name, plugin = :plugin, options = :options WHERE id = :id`
+func (p *SQLiteRepository) EditAccount(acc *connector.Account) (*connector.Account, error) {
+	query := `UPDATE accounts set name = :name, connector = :connector, options = :options WHERE id = :id`
 	_, err := p.DB.NamedExec(query, acc)
 	if err != nil {
 		return nil, err
@@ -123,8 +123,8 @@ func (p *SQLiteRepository) DeleteAccount(id int32) error {
 	return nil
 }
 
-func (p *SQLiteRepository) AddData(data []plugin.Data) error {
-	query := `INSERT INTO data (account_id, remote_id, resource_name, plugin, uri, metadata) VALUES (:account_id, :remote_id, :resource_name, :plugin, :uri, :metadata)`
+func (p *SQLiteRepository) AddData(data []connector.Data) error {
+	query := `INSERT INTO data (account_id, remote_id, resource_name, connector, uri, metadata) VALUES (:account_id, :remote_id, :resource_name, :connector, :uri, :metadata)`
 	_, err := p.DB.NamedExec(query, data)
 	if err != nil {
 		return err
@@ -132,8 +132,8 @@ func (p *SQLiteRepository) AddData(data []plugin.Data) error {
 	return nil
 }
 
-func (p *SQLiteRepository) ListData(filters *types.Filter) ([]plugin.Data, int, error) {
-	var data []plugin.Data
+func (p *SQLiteRepository) ListData(filters *types.Filter) ([]connector.Data, int, error) {
+	var data []connector.Data
 	var count = 0
 	query := `SELECT * FROM data WHERE 1=1`
 	countQuery := `SELECT count(*) FROM data WHERE 1=1`
@@ -152,8 +152,8 @@ func (p *SQLiteRepository) ListData(filters *types.Filter) ([]plugin.Data, int, 
 	return data, count, nil
 }
 
-func (p *SQLiteRepository) GetData(id int32) (*plugin.Data, error) {
-	data := &plugin.Data{}
+func (p *SQLiteRepository) GetData(id int32) (*connector.Data, error) {
+	data := &connector.Data{}
 	query := `SELECT * FROM data WHERE id = ?`
 	err := p.DB.Get(data, query, id)
 	if err != nil {
@@ -162,7 +162,7 @@ func (p *SQLiteRepository) GetData(id int32) (*plugin.Data, error) {
 	return data, nil
 }
 
-func (p *SQLiteRepository) EditData(data *plugin.Data) (*plugin.Data, error) {
+func (p *SQLiteRepository) EditData(data *connector.Data) (*connector.Data, error) {
 	query := `UPDATE data SET notes = :notes WHERE id = :id`
 	_, err := p.DB.NamedExec(query, data)
 	if err != nil {
@@ -188,8 +188,8 @@ func (p *SQLiteRepository) buildQuery(baseQuery string, countQuery string, filte
 		countQuery += queryPart
 		args = append(args, argsPart...)
 	}
-	if filters.Plugins != nil {
-		queryPart, argsPart, _ := sqlx.In(" AND plugin in (?)", filters.Plugins)
+	if filters.Connectors != nil {
+		queryPart, argsPart, _ := sqlx.In(" AND connector in (?)", filters.Connectors)
 		baseQuery += queryPart
 		countQuery += queryPart
 		args = append(args, argsPart...)
@@ -208,6 +208,5 @@ func (p *SQLiteRepository) buildQuery(baseQuery string, countQuery string, filte
 	}
 	baseQuery = p.DB.Rebind(baseQuery)
 	countQuery = p.DB.Rebind(countQuery)
-	fmt.Println(baseQuery)
 	return baseQuery, countQuery, args, nil
 }

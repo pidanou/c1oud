@@ -6,14 +6,14 @@ c1 is a free, extensible, open-source data aggregator designed to list all files
 
 ## Features
 
-- **Extensible**: Easily add support for new storage services with plugins.
+- **Extensible**: Easily add support for new storage services with connectors.
 - **Open-Source**: Community-driven development and transparency.
 - **Cross-Platform**: Runs on multiple operating systems.
 - **User-Friendly**: Simple interface for managing files across different storage services.
 
 ## How to use
 
-- Install plugins
+- Install connectors
 - Create accounts and configure them
 - Sync your account
 - Done
@@ -84,10 +84,10 @@ This will generate the binary file `c1` in the project root directory.
 - **`dev-templ`**: Runs the template generator in watch mode.
 - **`build-webapp`**: Generates templates and builds the web application.
 
-## Extend c1 with plugins
+## Extend c1 with connectors
 
-c1 is designed to be extensible, allowing you to easily add support for new storage services by developing plugins.
-See [`pkg/plugin`](./pkg/plugin)
+c1 is designed to be extensible, allowing you to easily add support for new storage services by developing connectors.
+See [`pkg/connector`](./pkg/connector)
 
 ## Contributing
 

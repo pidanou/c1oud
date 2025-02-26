@@ -2,10 +2,10 @@ package ui
 
 import (
 	"fmt"
-	"github.com/pidanou/c1-core/pkg/plugin"
+	"github.com/pidanou/c1-core/pkg/connector"
 )
 
-templ AccountsPage(accounts []plugin.Account) {
+templ AccountsPage(accounts []connector.Account) {
 	@Layout("accounts") {
 		<div style="display: flex; flex-direction: column; gap: 1rem">
 			<a role="button" class="contrast" href="/account/new" style="display:flex; gap: 1rem; width: max-content; align-items:center;margin-left:auto">
@@ -16,7 +16,7 @@ templ AccountsPage(accounts []plugin.Account) {
 				<thead>
 					<tr>
 						<th scope="col">Name</th>
-						<th scope="col">Plugin</th>
+						<th scope="col">Connector</th>
 						<th scope="col">Options</th>
 						<th scope="col"></th>
 					</tr>
@@ -31,14 +31,14 @@ templ AccountsPage(accounts []plugin.Account) {
 	}
 }
 
-templ AccountRow(acc *plugin.Account, plugins []plugin.Plugin, edit bool) {
+templ AccountRow(acc *connector.Account, connectors []connector.Connector, edit bool) {
 	if edit {
 		<tr>
 			<td><input name="name" value={ acc.Name }/></td>
 			<td>
-				<select name="plugin" aria-label="Select" required>
-					for _, plug := range plugins {
-						<option selected?={ acc.Plugin == plug.Name }>{ plug.Name }</option>
+				<select name="connector" aria-label="Select" required>
+					for _, plug := range connectors {
+						<option selected?={ acc.Connector == plug.Name }>{ plug.Name }</option>
 					}
 				</select>
 			</td>
@@ -57,7 +57,7 @@ templ AccountRow(acc *plugin.Account, plugins []plugin.Plugin, edit bool) {
 	} else {
 		<tr>
 			<td>{ acc.Name }</td>
-			<td>{ acc.Plugin }</td>
+			<td>{ acc.Connector }</td>
 			<td>{ acc.Options }</td>
 			<td style="width: 1%; min-width: min-content">
 				<div role="group" style="">
@@ -75,7 +75,7 @@ templ AccountRow(acc *plugin.Account, plugins []plugin.Plugin, edit bool) {
 	}
 }
 
-templ NewAccountPage(plugins []plugin.Plugin) {
+templ NewAccountPage(connectors []connector.Connector) {
 	@Layout("") {
 		<form style="display: flex; flex-direction: column; gap: 1rem" hx-post="/account">
 			<h2>New account</h2>
@@ -89,10 +89,10 @@ templ NewAccountPage(plugins []plugin.Plugin) {
 					/>
 				</label>
 				<label>
-					Plugin
-					<select name="plugin" aria-label="Select your favorite cuisine..." required>
-						<option selected disabled value="">Select plugin</option>
-						for _, plug := range plugins {
+					Connector
+					<select name="connector" aria-label="Select your favorite cuisine..." required>
+						<option selected disabled value="">Select connector</option>
+						for _, plug := range connectors {
 							<option value={ plug.Name }>{ plug.Name }</option>
 						}
 					</select>

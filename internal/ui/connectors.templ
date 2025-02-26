@@ -2,19 +2,19 @@ package ui
 
 import (
 	"fmt"
-	"github.com/pidanou/c1-core/pkg/plugin"
+	"github.com/pidanou/c1-core/pkg/connector"
 )
 
-templ NewPluginPage() {
+templ NewConnectorPage() {
 	@Layout("") {
-		<form style="display: flex; flex-direction: column; gap: 1rem" hx-post="/plugin">
-			<h2>New plugin</h2>
+		<form style="display: flex; flex-direction: column; gap: 1rem" hx-post="/connector">
+			<h2>New connector</h2>
 			<fieldset style="display: flex; flex-direction: column;gap:1rem">
 				<label>
-					Plugin name override
+					Connector name override
 					<input
 						name="name_override"
-						placeholder="Leave empty to use default plugin name"
+						placeholder="Leave empty to use default connector name"
 					/>
 				</label>
 				<label>
@@ -23,7 +23,7 @@ templ NewPluginPage() {
 						style="height: 20rem"
 						name="config"
 						placeholder='URL: 
-https://raw.githubusercontent.com/user/repo/refs/heads/main/plugin.json
+https://raw.githubusercontent.com/user/repo/refs/heads/main/connector.json
 
 or 
 
@@ -31,7 +31,7 @@ Raw configuration:
 {
   "name": "s3",
   "source": "vcs",
-  "uri": "https://github.com/pidanou/c1-plugins",
+  "uri": "https://github.com/pidanou/c1-connectors",
   "install_command": "go build -o s3 s3/s3.go && chmod +x s3",
   "update_command": "",
   "command": "./s3"
@@ -47,10 +47,10 @@ Raw configuration:
 	}
 }
 
-templ PluginsPage(plugins []plugin.Plugin) {
-	@Layout("plugins") {
+templ ConnectorsPage(connectors []connector.Connector) {
+	@Layout("connectors") {
 		<div style="display: flex; flex-direction: column; gap: 1rem">
-			<a role="button" class="contrast" href="/plugin/new" style="display:flex; gap: 1rem; width: max-content; align-items:center; margin-left:auto;"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M480-336 288-528l51-51 105 105v-342h72v342l105-105 51 51-192 192ZM263.72-192Q234-192 213-213.15T192-264v-72h72v72h432v-72h72v72q0 29.7-21.16 50.85Q725.68-192 695.96-192H263.72Z"></path></svg>New&nbsp;plugin</a>
+			<a role="button" class="contrast" href="/connector/new" style="display:flex; gap: 1rem; width: max-content; align-items:center; margin-left:auto;"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M480-336 288-528l51-51 105 105v-342h72v342l105-105 51 51-192 192ZM263.72-192Q234-192 213-213.15T192-264v-72h72v72h432v-72h72v72q0 29.7-21.16 50.85Q725.68-192 695.96-192H263.72Z"></path></svg>New&nbsp;connector</a>
 			<table>
 				<thead>
 					<tr>
@@ -64,8 +64,8 @@ templ PluginsPage(plugins []plugin.Plugin) {
 					</tr>
 				</thead>
 				<tbody hx-target="closest tr" hx-swap="outerHTML">
-					for _, plug := range plugins {
-						@PluginRow(&plug, false)
+					for _, plug := range connectors {
+						@ConnectorRow(&plug, false)
 					}
 				</tbody>
 			</table>
@@ -73,7 +73,7 @@ templ PluginsPage(plugins []plugin.Plugin) {
 	}
 }
 
-templ PluginRow(plug *plugin.Plugin, edit bool) {
+templ ConnectorRow(plug *connector.Connector, edit bool) {
 	if edit {
 		<tr>
 			<td>{ plug.Name }</td>
@@ -90,10 +90,10 @@ templ PluginRow(plug *plugin.Plugin, edit bool) {
 			<td><input required name="command" value={ plug.Command }/></td>
 			<td style="width: 1%; min-width: min-content">
 				<div role="group" style="margin-bottom: 0;">
-					<button style="border:0" hx-put={ fmt.Sprintf("/partials/plugin/%s", plug.Name) } hx-include="closest tr">
+					<button style="border:0" hx-put={ fmt.Sprintf("/partials/connector/%s", plug.Name) } hx-include="closest tr">
 						<svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M389-267 195-460l51-52 143 143 325-324 51 51-376 375Z"></path></svg>
 					</button>
-					<button style="border:0" hx-get={ fmt.Sprintf("/partials/plugin/%s", plug.Name) }>
+					<button style="border:0" hx-get={ fmt.Sprintf("/partials/connector/%s", plug.Name) }>
 						<svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="m339-288 141-141 141 141 51-51-141-141 141-141-51-51-141 141-141-141-51 51 141 141-141 141 51 51ZM480-96q-79 0-149-30t-122.5-82.5Q156-261 126-331T96-480q0-80 30-149.5t82.5-122Q261-804 331-834t149-30q80 0 149.5 30t122 82.5Q804-699 834-629.5T864-480q0 79-30 149t-82.5 122.5Q699-156 629.5-126T480-96Zm0-72q130 0 221-91t91-221q0-130-91-221t-221-91q-130 0-221 91t-91 221q0 130 91 221t221 91Zm0-312Z"></path></svg>
 					</button>
 				</div>
@@ -109,14 +109,14 @@ templ PluginRow(plug *plugin.Plugin, edit bool) {
 			<td>{ plug.Command }</td>
 			<td style="width: 1%; min-width: min-content">
 				<div role="group" style="">
-					<button style="border:0" hx-get={ fmt.Sprintf("/partials/plugin/%s/edit", plug.Name) }>
+					<button style="border:0" hx-get={ fmt.Sprintf("/partials/connector/%s/edit", plug.Name) }>
 						<svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M192-396v-72h288v72H192Zm0-150v-72h432v72H192Zm0-150v-72h432v72H192Zm336 504v-113l210-209q7.26-7.41 16.13-10.71Q763-528 771.76-528q9.55 0 18.31 3.5Q798.83-521 806-514l44 45q6.59 7.26 10.29 16.13Q864-444 864-435.24t-3.29 17.92q-3.3 9.15-10.71 16.32L641-192H528Zm288-243-45-45 45 45ZM576-240h45l115-115-22-23-22-22-116 115v45Zm138-138-22-22 44 45-22-23Z"></path></svg>
 					</button>
-					<button style="border:0" hx-indicator={ fmt.Sprintf("#plugin-%s-spinner", plug.Name) } hx-post={ fmt.Sprintf("/partials/plugin/%s/update", plug.Name) }>
-						@spinner(20, fmt.Sprintf("plugin-%s-spinner", plug.Name), "loader-indicator")
+					<button style="border:0" hx-indicator={ fmt.Sprintf("#connector-%s-spinner", plug.Name) } hx-post={ fmt.Sprintf("/partials/connector/%s/update", plug.Name) }>
+						@spinner(20, fmt.Sprintf("connector-%s-spinner", plug.Name), "loader-indicator")
 						<svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M288-192v-72h384v72H288Zm156-144v-342L339-573l-51-51 192-192 192 192-51 51-105-105v342h-72Z"></path></svg>
 					</button>
-					<button hx-confirm="All data will be lost. Proceed ?" hx-delete={ fmt.Sprintf("/partials/plugin/%s", plug.Name) } style="border:0">
+					<button hx-confirm="All data will be lost. Proceed ?" hx-delete={ fmt.Sprintf("/partials/connector/%s", plug.Name) } style="border:0">
 						<svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor">
 							<path d="M312-144q-29.7 0-50.85-21.15Q240-186.3 240-216v-480h-48v-72h192v-48h192v48h192v72h-48v479.57Q720-186 698.85-165T648-144H312Zm336-552H312v480h336v-480ZM384-288h72v-336h-72v336Zm120 0h72v-336h-72v336ZM312-696v480-480Z"></path>
 						</svg>
