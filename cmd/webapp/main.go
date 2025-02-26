@@ -33,7 +33,7 @@ func main() {
 	var db = &sqlx.DB{}
 	dbEngine := os.Getenv("C1_DB_ENGINE")
 
-	if dbEngine != "sqlite" {
+	if dbEngine == "postgres" {
 		db, _ = setupPostgresDB()
 	} else {
 		db, _ = setupSQLiteDB()
