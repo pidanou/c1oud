@@ -52,11 +52,14 @@ c1 is a free, extensible, open-source data aggregator designed to list all files
 # Only needed for Postgres
 C1_POSTGRES_DSN="postgres://postgres:password@localhost:5432/postgres?sslmode=disable
 
-# Only needed in dev mode
+# Defaults to no env which serves the static file from embedded fs and will not work on local dev
 ENV="dev"
 
-# either sqlite or postgres. By default it will try to run on postgres
+# Either sqlite or postgres defaults to sqlite
 C1_DB_ENGINE=postgres
+
+# Defaults to :7777
+PORT=":7777"
 ```
 
 ### Running the application

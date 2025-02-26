@@ -70,6 +70,10 @@ func (s *Server) Start() error {
 	partials.DELETE("/account/:id", h.DeleteAccount)
 	partials.PUT("/account/:id", h.PutAccount)
 
-	e.Logger.Fatal(e.Start(":1323"))
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = ":7777"
+	}
+	e.Logger.Fatal(e.Start(port))
 	return nil
 }

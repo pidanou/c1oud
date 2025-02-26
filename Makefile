@@ -2,7 +2,7 @@ GO_CMD = go
 WGO_CMD = wgo
 TEMPL_CMD = templ
 WEBAPP_PATH = cmd/webapp/main.go
-OUTPUT_BINARY = c1
+OUTPUT_BINARY = build/c1
 
 .PHONY: dev dev-templ dev-tailwind build-webapp
 
@@ -17,6 +17,5 @@ dev-templ:
 build-webapp:
 	@echo "Generating templates and building webapp..."
 	@$(TEMPL_CMD) generate
-	@$(TAILWIND_CMD) -i internal/ui/js/tailwind.input.css -o internal/ui/static/style.css --minify
-	@$(GO_CMD) build -o $(OUTPUT_BINARY) $(WEBAPP_PATH)
+	@CGO_ENABLED=0 $(GO_CMD) build -o $(OUTPUT_BINARY) $(WEBAPP_PATH)
 
