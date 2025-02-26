@@ -91,7 +91,25 @@ This will generate the binary file `c1` in the project root directory.
 ## Extend c1 with connectors
 
 c1 is designed to be extensible, allowing you to easily add support for new storage services by developing connectors.
+
+### Create a connector
+
 See [`pkg/connector`](./pkg/connector)
+
+### Install
+
+A connector is installed by reading a JSON. The JSON can be fetched from a remote source, a local file, or raw JSON string. Here is an example of JSON config. The connector name must be unique, you can override the plugin name even if you fetch it from a remote source.
+
+```json
+{
+  "name": "s3",
+  "source": "VCS",
+  "uri": "https://github.com/pidanou/c1-core",
+  "install_command": "go build -o s3 pkg/connector/s3/s3.go && chmod +x s3",
+  "update_command": "",
+  "command": "./s3/s3"
+}
+```
 
 ## Contributing
 

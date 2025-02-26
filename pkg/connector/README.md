@@ -39,3 +39,25 @@ For detailed examples, refer to:
 
 A connector can return any data as long as it is in the format of a list of `DataObject` messages. Connectors need to parse the options.
 The data returned by the connector will be upserted in the database using the `RemoteID` field.
+
+## Install a connector
+
+The installation of the connector is done through a JSON:
+
+```json
+{
+  "name": "s3",
+  "source": "VCS",
+  "uri": "https://github.com/pidanou/c1-core",
+  "install_command": "go build -o s3 pkg/connector/s3/s3.go && chmod +x s3",
+  "update_command": "",
+  "command": "./s3/s3"
+}
+```
+
+- name (required) : Default connector name that be overriden by the user
+- source (required) : How to fetch the source, can be: HTTP, VCS, Local
+- URI (required) : Location of the connector source, should a url, github repo, local path...
+- install_command (optional): Command to install the connector after downloading
+- update_command (optional) : Command to update the connector
+- command (required) : The command to start the connector from the root of the source, for example: python ./path/to/script

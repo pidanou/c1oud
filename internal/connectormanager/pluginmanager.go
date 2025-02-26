@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/pidanou/c1-core/internal/repositories"
 	"github.com/pidanou/c1-core/internal/types"
@@ -38,27 +39,40 @@ func (p *ConnectorManager) InstallConnector(connectorForm *types.ConnectorForm) 
 		}
 
 		resp, err := client.Do(req)
-		if err != nil {
-			log.Println(err)
-			return nil, err
-		}
-		defer resp.Body.Close()
+		if err == nil {
+			defer resp.Body.Close()
+			if resp.StatusCode != http.StatusOK {
+				log.Println(err)
+				return nil, err
+			}
 
-		if resp.StatusCode != http.StatusOK {
-			log.Println(err)
-			return nil, err
-		}
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				log.Println(err)
+				return nil, err
+			}
 
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			log.Println(err)
-			return nil, err
-		}
+			err = json.Unmarshal(body, conn)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			// Try from local
+			file, err := os.Open(connectorForm.Config)
+			if err != nil {
+				return nil, err
+			}
+			defer file.Close()
 
-		err = json.Unmarshal(body, conn)
-		if err != nil {
-			log.Println(err)
-			return nil, err
+			bytes, err := io.ReadAll(file)
+			if err != nil {
+				return nil, err
+			}
+
+			err = json.Unmarshal(bytes, conn)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
