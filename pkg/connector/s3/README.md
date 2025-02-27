@@ -1,5 +1,9 @@
 # Connector README
 
+## Requirements
+
+This connector uses your credentials stored in `.aws/credentials` file
+
 ## Installation
 
 To install this connector, you have two options:
