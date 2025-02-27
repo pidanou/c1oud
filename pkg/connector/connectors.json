@@ -7,14 +7,5 @@
     "install_command": "go build -o s3 pkg/connector/s3/s3.go && chmod +x s3",
     "update_command": "",
     "command": "./s3"
-  },
-  {
-    "name": "test",
-    "description": "A simple connector to fetch data from S3 buckets",
-    "source": "VCS",
-    "uri": "https://github.com/pidanou/c1-core",
-    "install_command": "go build -o s3 pkg/connector/s3/s3.go && chmod +x s3",
-    "update_command": "",
-    "command": "./s3"
   }
 ]
