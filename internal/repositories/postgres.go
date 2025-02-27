@@ -44,7 +44,7 @@ func (p *PostgresRepository) GetConnector(name string) (*connector.Connector, er
 }
 
 func (p *PostgresRepository) AddConnector(plug *connector.Connector) (*connector.Connector, error) {
-	query := `INSERT INTO connectors (name, source, uri, install_command, update_command, command) VALUES (:name, :source, :uri, :install_command, :update_command, :command)`
+	query := `INSERT INTO connectors (name, description, source, uri, install_command, update_command, command) VALUES (:name, :description, :source, :uri, :install_command, :update_command, :command)`
 	_, err := p.DB.NamedExec(query, plug)
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func (p *PostgresRepository) DeleteConnector(name string) error {
 }
 
 func (p *PostgresRepository) EditConnector(plug *connector.Connector) (*connector.Connector, error) {
-	query := `UPDATE connectors set source = :source, uri = :uri, install_command = :install_command, update_command = :update_command, command = :command WHERE name = :name`
+	query := `UPDATE connectors set description = :description, source = :source, uri = :uri, install_command = :install_command, update_command = :update_command, command = :command WHERE name = :name`
 	_, err := p.DB.NamedExec(query, plug)
 	if err != nil {
 		return nil, err

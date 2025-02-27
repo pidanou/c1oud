@@ -47,6 +47,7 @@ The installation of the connector is done through a JSON:
 ```json
 {
   "name": "s3",
+  "description": "A simple connector for S3"
   "source": "VCS",
   "uri": "https://github.com/pidanou/c1-core",
   "install_command": "go build -o s3 pkg/connector/s3/s3.go && chmod +x s3",
@@ -56,6 +57,7 @@ The installation of the connector is done through a JSON:
 ```
 
 - name (required) : Default connector name that be overriden by the user
+- description (optional) : Short description of the plugin
 - source (required) : How to fetch the source, can be: HTTP, VCS, Local
 - URI (required) : Location of the connector source, should a url, github repo, local path...
 - install_command (optional): Command to install the connector after downloading

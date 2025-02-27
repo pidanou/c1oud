@@ -1,8 +1,8 @@
 package types
 
 type ConnectorForm struct {
-	NameOverride string `form:"name_override"`
-	Config       string `form:"config"`
+	NameOverride string `form:"name_override" json:"name_override"`
+	Config       string `form:"config" json:"config"`
 }
 
 type Filter struct {

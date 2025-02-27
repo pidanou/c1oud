@@ -3,6 +3,7 @@ PRAGMA foreign_keys = ON;
 
 CREATE TABLE connectors (
   name TEXT PRIMARY KEY NOT NULL DEFAULT '',
+  description TEXT NOT NULL DEFAULT '',
   source TEXT NOT NULL DEFAULT '',
   uri TEXT NOT NULL DEFAULT '',
   install_command TEXT NOT NULL DEFAULT '',

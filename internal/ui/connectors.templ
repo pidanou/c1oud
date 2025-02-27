@@ -5,24 +5,54 @@ import (
 	"github.com/pidanou/c1-core/pkg/connector"
 )
 
-templ NewConnectorPage() {
+templ NewConnectorPage(officialConnectors []connector.Connector) {
 	@Layout("") {
-		<form style="display: flex; flex-direction: column; gap: 1rem" hx-post="/connector">
-			<h2>New connector</h2>
-			<fieldset style="display: flex; flex-direction: column;gap:1rem">
-				<label>
-					Connector name override
-					<input
-						name="name_override"
-						placeholder="Leave empty to use default connector name"
-					/>
-				</label>
-				<label>
-					Configuration
-					<textarea
-						style="height: 20rem"
-						name="config"
-						placeholder='URL: 
+		<div style="display:flex; gap: 5rem; width:100%">
+			<div style="display: flex; flex-direction: column; gap: 1rem; flex-grow:1">
+				<h2>Official connectors</h2>
+					<label>
+						Connector name override
+						<input
+              id="override_official_name"
+							name="name_override"
+							placeholder="Leave empty to use default connector name"
+						/>
+					</label>
+				<div style="display: flex; flex-direction: row; gap: 1rem; flex-wrap: wrap">
+					for _, conn := range officialConnectors {
+            <form hx-post="/connector" hx-include="#override_official_name">
+            <input style="display:none;" name="config" value={conn.ToJSON()}/>
+						<article>
+							<header>
+								{ conn.Name }
+							</header>
+              if conn.Description == "" {
+                  <body>No Description</body>
+                } else {
+							<body>{ conn.Description }</body>
+                  }
+							<footer><input type="submit" value="Install"/></footer>
+						</article>
+            </form>
+					}
+				</div>
+			</div>
+			<form style="display: flex; flex-direction: column; gap: 1rem; flex-grow:1" hx-post="/connector">
+				<h2>Custom connector</h2>
+				<fieldset style="display: flex; flex-direction: column;gap:1rem">
+					<label>
+						Connector name override
+						<input
+							name="name_override"
+							placeholder="Leave empty to use default connector name"
+						/>
+					</label>
+					<label>
+						Configuration
+						<textarea
+							style="height: 20rem"
+							name="config"
+							placeholder='URL: 
 https://raw.githubusercontent.com/user/repo/refs/heads/main/connector.json
 
 or 
@@ -36,14 +66,15 @@ Raw configuration:
   "update_command": "",
   "command": "./s3"
 }'
-					></textarea>
-				</label>
-			</fieldset>
-			<input
-				type="submit"
-				value="Install"
-			/>
-		</form>
+						></textarea>
+					</label>
+				</fieldset>
+				<input
+					type="submit"
+					value="Install"
+				/>
+			</form>
+		</div>
 	}
 }
 
@@ -55,6 +86,7 @@ templ ConnectorsPage(connectors []connector.Connector) {
 				<thead>
 					<tr>
 						<th scope="col">Name</th>
+						<th scope="col">Description</th>
 						<th scope="col">Source</th>
 						<th scope="col">URI</th>
 						<th scope="col">Install command</th>
@@ -64,8 +96,8 @@ templ ConnectorsPage(connectors []connector.Connector) {
 					</tr>
 				</thead>
 				<tbody hx-target="closest tr" hx-swap="outerHTML">
-					for _, plug := range connectors {
-						@ConnectorRow(&plug, false)
+					for _, conn := range connectors {
+						@ConnectorRow(&conn, false)
 					}
 				</tbody>
 			</table>
@@ -73,27 +105,28 @@ templ ConnectorsPage(connectors []connector.Connector) {
 	}
 }
 
-templ ConnectorRow(plug *connector.Connector, edit bool) {
+templ ConnectorRow(conn *connector.Connector, edit bool) {
 	if edit {
 		<tr>
-			<td>{ plug.Name }</td>
+			<td>{ conn.Name }</td>
+			<td>{ conn.Description }</td>
 			<td>
 				<select name="source" aria-label="Select" required>
-					<option selected?={ plug.Source == "vcs" }>VCS</option>
-					<option selected?={ plug.Source == "http" }>HTTP</option>
-					<option selected?={ plug.Source == "local" }>Local</option>
+					<option selected?={ conn.Source == "vcs" }>VCS</option>
+					<option selected?={ conn.Source == "http" }>HTTP</option>
+					<option selected?={ conn.Source == "local" }>Local</option>
 				</select>
 			</td>
-			<td><input required name="uri" value={ plug.URI }/></td>
-			<td><input name="install_command" value={ plug.InstallCommand }/></td>
-			<td><input name="update_command" value={ plug.UpdateCommand }/></td>
-			<td><input required name="command" value={ plug.Command }/></td>
+			<td><input required name="uri" value={ conn.URI }/></td>
+			<td><input name="install_command" value={ conn.InstallCommand }/></td>
+			<td><input name="update_command" value={ conn.UpdateCommand }/></td>
+			<td><input required name="command" value={ conn.Command }/></td>
 			<td style="width: 1%; min-width: min-content">
 				<div role="group" style="margin-bottom: 0;">
-					<button style="border:0" hx-put={ fmt.Sprintf("/partials/connector/%s", plug.Name) } hx-include="closest tr">
+					<button style="border:0" hx-put={ fmt.Sprintf("/partials/connector/%s", conn.Name) } hx-include="closest tr">
 						<svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M389-267 195-460l51-52 143 143 325-324 51 51-376 375Z"></path></svg>
 					</button>
-					<button style="border:0" hx-get={ fmt.Sprintf("/partials/connector/%s", plug.Name) }>
+					<button style="border:0" hx-get={ fmt.Sprintf("/partials/connector/%s", conn.Name) }>
 						<svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="m339-288 141-141 141 141 51-51-141-141 141-141-51-51-141 141-141-141-51 51 141 141-141 141 51 51ZM480-96q-79 0-149-30t-122.5-82.5Q156-261 126-331T96-480q0-80 30-149.5t82.5-122Q261-804 331-834t149-30q80 0 149.5 30t122 82.5Q804-699 834-629.5T864-480q0 79-30 149t-82.5 122.5Q699-156 629.5-126T480-96Zm0-72q130 0 221-91t91-221q0-130-91-221t-221-91q-130 0-221 91t-91 221q0 130 91 221t221 91Zm0-312Z"></path></svg>
 					</button>
 				</div>
@@ -101,22 +134,23 @@ templ ConnectorRow(plug *connector.Connector, edit bool) {
 		</tr>
 	} else {
 		<tr>
-			<td>{ plug.Name }</td>
-			<td>{ plug.Source }</td>
-			<td>{ plug.URI }</td>
-			<td>{ plug.InstallCommand }</td>
-			<td>{ plug.UpdateCommand }</td>
-			<td>{ plug.Command }</td>
+			<td>{ conn.Name }</td>
+			<td>{ conn.Description }</td>
+			<td>{ conn.Source }</td>
+			<td>{ conn.URI }</td>
+			<td>{ conn.InstallCommand }</td>
+			<td>{ conn.UpdateCommand }</td>
+			<td>{ conn.Command }</td>
 			<td style="width: 1%; min-width: min-content">
 				<div role="group" style="">
-					<button style="border:0" hx-get={ fmt.Sprintf("/partials/connector/%s/edit", plug.Name) }>
+					<button style="border:0" hx-get={ fmt.Sprintf("/partials/connector/%s/edit", conn.Name) }>
 						<svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M192-396v-72h288v72H192Zm0-150v-72h432v72H192Zm0-150v-72h432v72H192Zm336 504v-113l210-209q7.26-7.41 16.13-10.71Q763-528 771.76-528q9.55 0 18.31 3.5Q798.83-521 806-514l44 45q6.59 7.26 10.29 16.13Q864-444 864-435.24t-3.29 17.92q-3.3 9.15-10.71 16.32L641-192H528Zm288-243-45-45 45 45ZM576-240h45l115-115-22-23-22-22-116 115v45Zm138-138-22-22 44 45-22-23Z"></path></svg>
 					</button>
-					<button style="border:0" hx-indicator={ fmt.Sprintf("#connector-%s-spinner", plug.Name) } hx-post={ fmt.Sprintf("/partials/connector/%s/update", plug.Name) }>
-						@spinner(20, fmt.Sprintf("connector-%s-spinner", plug.Name), "loader-indicator")
+					<button style="border:0" hx-indicator={ fmt.Sprintf("#connector-%s-spinner", conn.Name) } hx-post={ fmt.Sprintf("/partials/connector/%s/update", conn.Name) }>
+						@spinner(20, fmt.Sprintf("connector-%s-spinner", conn.Name), "loader-indicator")
 						<svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M288-192v-72h384v72H288Zm156-144v-342L339-573l-51-51 192-192 192 192-51 51-105-105v342h-72Z"></path></svg>
 					</button>
-					<button hx-confirm="All data will be lost. Proceed ?" hx-delete={ fmt.Sprintf("/partials/connector/%s", plug.Name) } style="border:0">
+					<button hx-confirm="All data will be lost. Proceed ?" hx-delete={ fmt.Sprintf("/partials/connector/%s", conn.Name) } style="border:0">
 						<svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor">
 							<path d="M312-144q-29.7 0-50.85-21.15Q240-186.3 240-216v-480h-48v-72h192v-48h192v48h192v72h-48v479.57Q720-186 698.85-165T648-144H312Zm336-552H312v480h336v-480ZM384-288h72v-336h-72v336Zm120 0h72v-336h-72v336ZM312-696v480-480Z"></path>
 						</svg>

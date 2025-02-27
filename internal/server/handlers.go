@@ -1,7 +1,9 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -204,7 +206,39 @@ func (h *Handler) PostConnector(c echo.Context) error {
 }
 
 func (h *Handler) GetNewConnectorPage(c echo.Context) error {
-	return Render(c, http.StatusOK, ui.NewConnectorPage())
+	connectors := []connector.Connector{}
+	client := &http.Client{}
+
+	req, err := http.NewRequest("GET", constants.OfficialConnectorsList, nil)
+	if err != nil {
+		log.Println(err)
+		c.Response().Header().Set("Hx-Trigger", `{"add-toast": {"message": "Could not fetch official connectors", "type": "warning"}}`)
+		return err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Println(err)
+		c.Response().Header().Set("Hx-Trigger", `{"add-toast": {"message": "Could not fetch official connectors", "type": "warning"}}`)
+	}
+
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		log.Println(err)
+		c.Response().Header().Set("Hx-Trigger", `{"add-toast": {"message": "Could not fetch official connectors", "type": "warning"}}`)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Println(err)
+		c.Response().Header().Set("Hx-Trigger", `{"add-toast": {"message": "Could not fetch official connectors", "type": "warning"}}`)
+	}
+
+	err = json.Unmarshal(body, &connectors)
+	if err != nil {
+		c.Response().Header().Set("Hx-Trigger", `{"add-toast": {"message": "Could not fetch official connectors", "type": "warning"}}`)
+	}
+	return Render(c, http.StatusOK, ui.NewConnectorPage(connectors))
 }
 
 func (h *Handler) GetEditConnectorRow(c echo.Context) error {

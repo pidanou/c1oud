@@ -103,6 +103,7 @@ A connector is installed by reading a JSON. The JSON can be fetched from a remot
 ```json
 {
   "name": "s3",
+  "description": "A simple connector for S3",
   "source": "VCS",
   "uri": "https://github.com/pidanou/c1-core",
   "install_command": "go build -o s3 pkg/connector/s3/s3.go && chmod +x s3",
