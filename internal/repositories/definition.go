@@ -6,7 +6,8 @@ import (
 )
 
 type ConnectorRepository interface {
-	ListConnectors() (res []connector.Connector, count int, err error)
+	ListActiveConnectors() (res []connector.Connector, count int, err error)
+	ListAllConnectors() (res []string, err error)
 	GetConnector(name string) (*connector.Connector, error)
 	AddConnector(*connector.Connector) (*connector.Connector, error)
 	EditConnector(*connector.Connector) (*connector.Connector, error)

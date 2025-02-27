@@ -10,7 +10,7 @@ CREATE TABLE connectors (
 
 CREATE TABLE accounts (
   id SERIAL PRIMARY KEY,
-  connector TEXT NOT NULL REFERENCES connectors (name) ON DELETE CASCADE,
+  connector TEXT NOT NULL REFERENCES connectors (name) ON DELETE SET NULL,
   name TEXT NOT NULL DEFAULT '',
   options TEXT NOT NULL DEFAULT '{}'
 );
@@ -19,7 +19,6 @@ CREATE TABLE data (
   id SERIAL PRIMARY KEY,
   account_id INTEGER NOT NULL REFERENCES accounts (id) ON DELETE CASCADE,
   remote_id TEXT NOT NULL DEFAULT '',
-  connector TEXT NOT NULL REFERENCES connectors (name) ON DELETE CASCADE,
   resource_name TEXT NOT NULL DEFAULT '',
   uri TEXT NOT NULL DEFAULT '',
   metadata TEXT NOT NULL DEFAULT '',

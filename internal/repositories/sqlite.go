@@ -17,7 +17,7 @@ func NewSQLiteRepository(DB *sqlx.DB) *SQLiteRepository {
 	return &SQLiteRepository{DB: DB}
 }
 
-func (p *SQLiteRepository) ListConnectors() ([]connector.Connector, int, error) {
+func (p *SQLiteRepository) ListActiveConnectors() ([]connector.Connector, int, error) {
 	var connectors []connector.Connector
 	var count = 0
 	query := `SELECT * FROM connectors`
@@ -33,6 +33,16 @@ func (p *SQLiteRepository) ListConnectors() ([]connector.Connector, int, error) 
 	return connectors, count, nil
 }
 
+func (p *SQLiteRepository) ListAllConnectors() ([]string, error) {
+	var connectors []string
+	query := `SELECT distinct(connector) FROM data`
+	err := p.DB.Select(&connectors, query)
+	if err != nil {
+		return nil, err
+	}
+	return connectors, nil
+}
+
 func (p *SQLiteRepository) GetConnector(name string) (*connector.Connector, error) {
 	var connector connector.Connector
 	query := `SELECT * FROM connectors WHERE name = ? LIMIT 1`
@@ -44,7 +54,7 @@ func (p *SQLiteRepository) GetConnector(name string) (*connector.Connector, erro
 }
 
 func (p *SQLiteRepository) AddConnector(plug *connector.Connector) (*connector.Connector, error) {
-	query := `INSERT INTO connectors (name, description, source, uri, install_command, update_command, command) VALUES (:name, :description :source, :uri, :install_command, :update_command, :command)`
+	query := `INSERT INTO connectors (name, description, source, uri, install_command, update_command, command) VALUES (:name, :description, :source, :uri, :install_command, :update_command, :command)`
 	_, err := p.DB.NamedExec(query, plug)
 	if err != nil {
 		return nil, err
@@ -97,7 +107,7 @@ func (p *SQLiteRepository) GetAccount(id int32) (*connector.Account, error) {
 }
 
 func (p *SQLiteRepository) AddAccount(acc *connector.Account) (*connector.Account, error) {
-	query := `INSERT INTO accounts (name, connector) VALUES (:name, :connector)`
+	query := `INSERT INTO accounts (name, connector, options) VALUES (:name, :connector, :options)`
 	_, err := p.DB.NamedExec(query, acc)
 	if err != nil {
 		return nil, err

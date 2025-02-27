@@ -109,7 +109,7 @@ func setupSQLiteDB() (*sqlx.DB, error) {
 		}
 		file.Close()
 	}
-	db, err := sqlx.Open("sqlite", dbPath)
+	db, err := sqlx.Open("sqlite", dbPath+"?_pragma=foreign_keys(1)")
 	if err != nil {
 		log.Fatalf("Cannot open DB: %s", err)
 	}

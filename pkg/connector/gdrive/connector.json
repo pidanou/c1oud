@@ -1,0 +1,9 @@
+{
+  "name": "gdrive-adc",
+  "description": "A simple connector to fetch data from Google Drive using gcloud ADC",
+  "source": "VCS",
+  "uri": "https://github.com/pidanou/c1-core",
+  "install_command": "go build -o gdrive pkg/connector/gdrive/gdrive.go && chmod +x gdrive",
+  "update_command": "",
+  "command": "./gdrive"
+}

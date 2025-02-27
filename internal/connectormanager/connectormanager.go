@@ -146,8 +146,12 @@ func (p *ConnectorManager) UpdateConnector(name string) error {
 	return nil
 }
 
-func (p *ConnectorManager) ListConnectors() ([]connector.Connector, int, error) {
-	return p.ConnectorRepository.ListConnectors()
+func (p *ConnectorManager) ListActiveConnectors() ([]connector.Connector, int, error) {
+	return p.ConnectorRepository.ListActiveConnectors()
+}
+
+func (p *ConnectorManager) ListAllConnectors() ([]string, error) {
+	return p.ConnectorRepository.ListAllConnectors()
 }
 
 func (p *ConnectorManager) ListAccounts() ([]connector.Account, int, error) {

@@ -7,52 +7,47 @@ import (
 
 templ NewConnectorPage(officialConnectors []connector.Connector) {
 	@Layout("") {
-		<div style="display:flex; gap: 5rem; width:100%">
-			<div style="display: flex; flex-direction: column; gap: 1rem; flex-grow:1">
-				<h2>Official connectors</h2>
-					<label>
-						Connector name override
-						<input
-              id="override_official_name"
-							name="name_override"
-							placeholder="Leave empty to use default connector name"
-						/>
-					</label>
+		<div style="display:flex;flex-direction: column; gap: 1rem; width:100%">
+			<label>
+				Connector name override
+				<input
+					id="name_override"
+					name="name_override"
+					placeholder="Leave empty to use default connector name"
+				/>
+			</label>
+			<details role="button" class="outline secondary">
+				<summary style="font-weight: bold">Official connectors</summary>
 				<div style="display: flex; flex-direction: row; gap: 1rem; flex-wrap: wrap">
 					for _, conn := range officialConnectors {
-            <form hx-post="/connector" hx-include="#override_official_name">
-            <input style="display:none;" name="config" value={conn.ToJSON()}/>
-						<article>
-							<header>
-								{ conn.Name }
-							</header>
-              if conn.Description == "" {
-                  <body>No Description</body>
-                } else {
-							<body>{ conn.Description }</body>
-                  }
-							<footer><input type="submit" value="Install"/></footer>
-						</article>
-            </form>
+						<form style="flex-grow:1; min-width:30%" hx-post="/connector" hx-include="#name_override">
+							<input style="display:none;" name="config" value={ conn.ToJSON() }/>
+							<article>
+								<header>
+									{ conn.Name }
+								</header>
+								if conn.Description == "" {
+									<body>No Description</body>
+								} else {
+									<body>{ conn.Description }</body>
+								}
+								<footer><input type="submit" value="Install"/></footer>
+							</article>
+						</form>
 					}
 				</div>
-			</div>
-			<form style="display: flex; flex-direction: column; gap: 1rem; flex-grow:1" hx-post="/connector">
-				<h2>Custom connector</h2>
-				<fieldset style="display: flex; flex-direction: column;gap:1rem">
-					<label>
-						Connector name override
-						<input
-							name="name_override"
-							placeholder="Leave empty to use default connector name"
-						/>
-					</label>
-					<label>
-						Configuration
-						<textarea
-							style="height: 20rem"
-							name="config"
-							placeholder='URL: 
+			</details>
+			<details role="button" class="outline secondary">
+				<summary style="font-weight:bold">Custom connector</summary>
+        <h4>Always verify that the connector is legit!</h4>
+				<form style="display: flex; flex-direction: column; gap: 1rem;" hx-post="/connector" hx-include="#name_override">
+					<fieldset style="display: flex; flex-direction: column;gap:1rem">
+						<label>
+							Configuration
+							<textarea
+								style="height: 20rem"
+								name="config"
+								placeholder='URL: 
 https://raw.githubusercontent.com/user/repo/refs/heads/main/connector.json
 
 or 
@@ -66,14 +61,15 @@ Raw configuration:
   "update_command": "",
   "command": "./s3"
 }'
-						></textarea>
-					</label>
-				</fieldset>
-				<input
-					type="submit"
-					value="Install"
-				/>
-			</form>
+							></textarea>
+						</label>
+					</fieldset>
+					<input
+						type="submit"
+						value="Install"
+					/>
+				</form>
+			</details>
 		</div>
 	}
 }

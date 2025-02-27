@@ -50,9 +50,9 @@ func (h *Handler) GetDataPage(c echo.Context) error {
 	if filter.Connectors == nil {
 		filter.Connectors = []string{}
 	}
-	connectors, _, err := h.ConnectorManager.ListConnectors()
+	connectors, err := h.ConnectorManager.ListAllConnectors()
 	if err != nil {
-		connectors = []connector.Connector{}
+		connectors = []string{}
 	}
 
 	accounts, _, err := h.ConnectorManager.ListAccounts()
@@ -173,7 +173,7 @@ func (h *Handler) GetAccountsPage(c echo.Context) error {
 }
 
 func (h *Handler) GetConnectorsPage(c echo.Context) error {
-	connectors, _, err := h.ConnectorManager.ListConnectors()
+	connectors, _, err := h.ConnectorManager.ListActiveConnectors()
 	if err != nil {
 		log.Println(err)
 		return Render(c, http.StatusInternalServerError, ui.ConnectorsPage(nil))
@@ -196,7 +196,7 @@ func (h *Handler) PostConnector(c echo.Context) error {
 
 	_, err = h.ConnectorManager.InstallConnector(connectorForm)
 	if err != nil {
-		log.Println(err)
+		log.Println("Unable to install connector: ", err)
 		c.Response().Header().Set("Hx-Trigger", `{"add-toast": {"message": "Unable to install connector", "type": "warning"}}`)
 		return c.String(http.StatusInternalServerError, "Unable to install connector")
 	}
@@ -320,7 +320,7 @@ func (h *Handler) GetEditAccountRow(c echo.Context) error {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
 
-	connectors, _, err := h.ConnectorManager.ListConnectors()
+	connectors, _, err := h.ConnectorManager.ListActiveConnectors()
 	if err != nil {
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
@@ -358,7 +358,7 @@ func (h *Handler) DeleteAccount(c echo.Context) error {
 }
 
 func (h *Handler) GetNewAccountPage(c echo.Context) error {
-	connectors, _, err := h.ConnectorManager.ListConnectors()
+	connectors, _, err := h.ConnectorManager.ListActiveConnectors()
 	if err != nil {
 		log.Println(err)
 	}

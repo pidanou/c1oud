@@ -5,7 +5,7 @@ import (
 	"github.com/pidanou/c1-core/pkg/connector"
 )
 
-templ DataPage(accounts []connector.Account, data []connector.Data, connectors []connector.Connector, page int, count int) {
+templ DataPage(accounts []connector.Account, data []connector.Data, connectors []string, page int, count int) {
 	<style>
 @keyframes spin {
   100% {
@@ -51,10 +51,10 @@ templ DataPage(accounts []connector.Account, data []connector.Data, connectors [
 					</fieldset>
 					<fieldset>
 						<legend>Connectors:</legend>
-						for _, plg := range connectors {
+						for _, conn := range connectors {
 							<label>
-								<input type="checkbox" name="connector" value={ plg.Name } hx-get="/partials/data" hx-include="#filters, #search" hx-target="#data-table-body" hx-swap="outerHTML"/>
-								{ plg.Name }
+								<input type="checkbox" name="connector" value={ conn } hx-get="/partials/data" hx-include="#filters, #search" hx-target="#data-table-body" hx-swap="outerHTML"/>
+								{ conn }
 							</label>
 						}
 					</fieldset>

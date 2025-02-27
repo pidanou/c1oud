@@ -17,7 +17,7 @@ func NewPostgresRepository(DB *sqlx.DB) *PostgresRepository {
 	return &PostgresRepository{DB: DB}
 }
 
-func (p *PostgresRepository) ListConnectors() ([]connector.Connector, int, error) {
+func (p *PostgresRepository) ListActiveConnectors() ([]connector.Connector, int, error) {
 	var connectors []connector.Connector
 	var count = 0
 	query := `SELECT * FROM connectors`
@@ -31,6 +31,16 @@ func (p *PostgresRepository) ListConnectors() ([]connector.Connector, int, error
 		return nil, count, err
 	}
 	return connectors, count, nil
+}
+
+func (p *PostgresRepository) ListAllConnectors() ([]string, error) {
+	var connectors []string
+	query := `SELECT distinct(connector) FROM data`
+	err := p.DB.Select(&connectors, query)
+	if err != nil {
+		return nil, err
+	}
+	return connectors, nil
 }
 
 func (p *PostgresRepository) GetConnector(name string) (*connector.Connector, error) {

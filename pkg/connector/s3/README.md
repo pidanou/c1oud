@@ -25,5 +25,5 @@ To install this connector, you have two options:
 ### Options Explained:
 
 - profile (optional): The profile in your `.aws/credentials` file. If not given, will try to use `default`.
-- region (**required**): Region is required to access an endpoint.
+- region (**optional**): Region is required to access an endpoint. If not given, will try to use `default config`
 - buckets (optional): List of buckets to sync.
