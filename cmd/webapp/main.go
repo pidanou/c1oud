@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -33,22 +32,21 @@ func main() {
 	var db = &sqlx.DB{}
 	dbEngine := os.Getenv("C1_DB_ENGINE")
 
-	if dbEngine == "postgres" {
-		db, _ = setupPostgresDB()
+	connectorManager := &connectormanager.ConnectorManager{}
+	if dbEngine != "sqlite" {
+		db, err = setupPostgresDB()
+		connectorManager = connectormanager.NewConnectorManager(repositories.NewPostgresRepository(db))
 	} else {
-		db, _ = setupSQLiteDB()
+		db, err = setupSQLiteDB()
+		connectorManager = connectormanager.NewConnectorManager(repositories.NewSQLiteRepository(db))
+	}
+	if err != nil {
+		log.Fatalf("Error booting connectormanager: %v", err)
 	}
 	defer db.Close()
 
-	connectorManager := &connectormanager.ConnectorManager{}
-	if dbEngine != "sqlite" {
-		connectorManager = connectormanager.NewConnectorManager(repositories.NewPostgresRepository(db))
-	} else {
-		connectorManager = connectormanager.NewConnectorManager(repositories.NewSQLiteRepository(db))
-	}
-
 	app := &server.Server{ConnectorManager: connectorManager, DB: db}
-	app.Start()
+	app.Start(*connectorManager)
 }
 
 func setupPostgresDB() (*sqlx.DB, error) {
@@ -90,7 +88,7 @@ func setupPostgresDB() (*sqlx.DB, error) {
 
 	err = m.Up()
 	if err != nil && err != migrate.ErrNoChange {
-		fmt.Println(err)
+		log.Println(err)
 		m.Down()
 		log.Fatal("Cannot update DB")
 		return nil, err
@@ -149,7 +147,7 @@ func setupSQLiteDB() (*sqlx.DB, error) {
 
 	err = m.Up()
 	if err != nil && err != migrate.ErrNoChange {
-		fmt.Println(err)
+		log.Println(err)
 		m.Down()
 		log.Fatal("Cannot update DB")
 		return nil, err

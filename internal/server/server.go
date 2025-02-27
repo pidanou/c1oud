@@ -9,7 +9,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 	"github.com/pidanou/c1-core/internal/connectormanager"
-	"github.com/pidanou/c1-core/internal/repositories"
 	"github.com/pidanou/c1-core/internal/ui"
 )
 
@@ -31,8 +30,8 @@ func getFileSystem(useOS bool, embededFiles embed.FS) http.FileSystem {
 	return http.FS(fsys)
 }
 
-func (s *Server) Start() error {
-	h := &Handler{ConnectorManager: *connectormanager.NewConnectorManager(repositories.NewPostgresRepository(s.DB))}
+func (s *Server) Start(connManager connectormanager.ConnectorManager) error {
+	h := &Handler{ConnectorManager: connManager}
 
 	e := echo.New()
 	e.HideBanner = true

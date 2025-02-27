@@ -2,7 +2,8 @@
 
 ## Requirements
 
-This connector uses your credentials stored in `.aws/credentials` file
+This connector uses your credentials stored in `.aws/credentials` file.
+See [AWS documentation](https://docs.aws.amazon.com/cli/latest/userguide/cli-authentication-user.html) for more information
 
 ## Installation
 
@@ -17,10 +18,12 @@ To install this connector, you have two options:
 {
   "profile": "default",
   "buckets": ["bucket1", "bucket2", "bucket3"]
+  "region": "us-east-1"
 }
 ```
 
 ### Options Explained:
 
-- profile: the profile in your `.aws/credentials` file. If not given, will try to use `default`.
-- buckets: List of buckets to sync. **Required**
+- profile (optional): The profile in your `.aws/credentials` file. If not given, will try to use `default`.
+- region (**required**): Region is required to access an endpoint.
+- buckets (optional): List of buckets to sync.

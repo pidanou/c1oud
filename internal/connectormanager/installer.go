@@ -3,6 +3,7 @@ package connectormanager
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"os/exec"
@@ -149,11 +150,11 @@ func downloadFromLocal(conn *connector.Connector) error {
 		cmd.Dir = downloadDir
 		out, err := cmd.CombinedOutput()
 		if err != nil {
-			fmt.Println("Error:", err)
+			log.Println("Error:", err)
 			if exitErr, ok := err.(*exec.ExitError); ok {
-				fmt.Println("Exit Code:", exitErr.ExitCode())
+				log.Println("Exit Code:", exitErr.ExitCode())
 			}
-			fmt.Println("Output:", string(out))
+			log.Println("Output:", string(out))
 			return nil
 		}
 		return err

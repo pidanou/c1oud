@@ -185,7 +185,7 @@ func (p *PostgresRepository) buildQuery(baseQuery string, countQuery string, fil
 	if filters.Search != "" {
 		baseQuery += fmt.Sprint(" AND (resource_name ILIKE ? OR metadata ILIKE ? OR notes ILIKE ?)")
 		countQuery += fmt.Sprint(" AND (resource_name ILIKE ? OR metadata ILIKE ? OR notes ILIKE ?)")
-		args = append(args, "%"+filters.Search+"%", "%"+filters.Search+"%", "%"+filters.Search+"%", "%")
+		args = append(args, "%"+filters.Search+"%", "%"+filters.Search+"%", "%"+filters.Search+"%")
 	}
 	if filters.Accounts != nil {
 		queryPart, argsPart, _ := sqlx.In(" AND account_id in (?)", filters.Accounts)

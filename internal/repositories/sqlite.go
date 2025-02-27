@@ -178,9 +178,9 @@ func (p *SQLiteRepository) buildQuery(baseQuery string, countQuery string, filte
 		return baseQuery, countQuery, []interface{}{}, nil
 	}
 	if filters.Search != "" {
-		baseQuery += fmt.Sprint(" AND (resource_name ILIKE ? OR metadata ILIKE ? OR notes ILIKE ?)")
-		countQuery += fmt.Sprint(" AND (resource_name ILIKE ? OR metadata ILIKE ? OR notes ILIKE ?)")
-		args = append(args, "%"+filters.Search+"%", "%"+filters.Search+"%", "%"+filters.Search+"%", "%")
+		baseQuery += fmt.Sprint(" AND (resource_name LIKE ? OR metadata LIKE ? OR notes LIKE ?)")
+		countQuery += fmt.Sprint(" AND (resource_name LIKE ? OR metadata LIKE ? OR notes LIKE ?)")
+		args = append(args, "%"+filters.Search+"%", "%"+filters.Search+"%", "%"+filters.Search+"%")
 	}
 	if filters.Accounts != nil {
 		queryPart, argsPart, _ := sqlx.In(" AND account_id in (?)", filters.Accounts)
