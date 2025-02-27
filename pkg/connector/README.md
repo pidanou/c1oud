@@ -61,5 +61,5 @@ The installation of the connector is done through a JSON:
 - source (required) : How to fetch the source, can be: HTTP, VCS, Local
 - URI (required) : Location of the connector source, should a url, github repo, local path...
 - install_command (optional): Command to install the connector after downloading
-- update_command (optional) : Command to update the connector
+- update_command (optional) : Command to update the connector, by default it will simply clear the folder and reinstall, for VCS it will try to do a `git pull`
 - command (required) : The command to start the connector from the root of the source, for example: python ./path/to/script
