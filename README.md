@@ -24,6 +24,7 @@ c1 is a free, extensible, open-source data aggregator designed to list all files
 - CRON jobs
 - Metadata of connector syncs to allow differential sync
 - Connector cleanup/reinstall
+- Find a system to allow deletion of deleted items
 
 ## Getting Started
 
