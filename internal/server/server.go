@@ -8,7 +8,6 @@ import (
 
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/pidanou/c1-core/internal/connectormanager"
 	"github.com/pidanou/c1-core/internal/ui"
 )
@@ -36,7 +35,7 @@ func (s *Server) Start(connManager connectormanager.ConnectorManager) error {
 
 	e := echo.New()
 	e.HideBanner = true
-	e.Use(middleware.Logger())
+	// e.Use(middleware.Logger())
 
 	useOS := os.Getenv("ENV") == "dev"
 	assetHandler := http.FileServer(getFileSystem(useOS, ui.StaticFiles))

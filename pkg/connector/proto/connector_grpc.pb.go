@@ -26,7 +26,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ConnectorClient interface {
-	Sync(ctx context.Context, in *SyncRequest, opts ...grpc.CallOption) (*Empty, error)
+	Sync(ctx context.Context, in *SyncRequest, opts ...grpc.CallOption) (*EndSync, error)
 }
 
 type connectorClient struct {
@@ -37,9 +37,9 @@ func NewConnectorClient(cc grpc.ClientConnInterface) ConnectorClient {
 	return &connectorClient{cc}
 }
 
-func (c *connectorClient) Sync(ctx context.Context, in *SyncRequest, opts ...grpc.CallOption) (*Empty, error) {
+func (c *connectorClient) Sync(ctx context.Context, in *SyncRequest, opts ...grpc.CallOption) (*EndSync, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Empty)
+	out := new(EndSync)
 	err := c.cc.Invoke(ctx, Connector_Sync_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func (c *connectorClient) Sync(ctx context.Context, in *SyncRequest, opts ...grp
 // All implementations must embed UnimplementedConnectorServer
 // for forward compatibility.
 type ConnectorServer interface {
-	Sync(context.Context, *SyncRequest) (*Empty, error)
+	Sync(context.Context, *SyncRequest) (*EndSync, error)
 	mustEmbedUnimplementedConnectorServer()
 }
 
@@ -62,7 +62,7 @@ type ConnectorServer interface {
 // pointer dereference when methods are called.
 type UnimplementedConnectorServer struct{}
 
-func (UnimplementedConnectorServer) Sync(context.Context, *SyncRequest) (*Empty, error) {
+func (UnimplementedConnectorServer) Sync(context.Context, *SyncRequest) (*EndSync, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Sync not implemented")
 }
 func (UnimplementedConnectorServer) mustEmbedUnimplementedConnectorServer() {}

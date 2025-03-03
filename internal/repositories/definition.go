@@ -17,8 +17,10 @@ type ConnectorRepository interface {
 	AddAccount(*connector.Account) (*connector.Account, error)
 	EditAccount(*connector.Account) (*connector.Account, error)
 	DeleteAccount(id int32) error
-	ListData(filters *types.Filter) (res []connector.Data, count int, err error)
+	ListData(filters *types.DataFilter) (res []connector.Data, count int, err error)
 	AddData([]connector.Data) error
 	GetData(id int32) (*connector.Data, error)
 	EditData(*connector.Data) (*connector.Data, error)
+	AddSyncInfo(*connector.SyncInfo) error
+	ListSyncInfo(types.SyncInfoFilter) ([]connector.SyncInfo, error)
 }

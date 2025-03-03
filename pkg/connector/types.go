@@ -39,3 +39,12 @@ type Data struct {
 	Metadata     string `db:"metadata"`
 	Notes        string `db:"notes" form:"notes"`
 }
+
+type SyncInfo struct {
+	ID        int32  `db:"id"`
+	Connector string `db:"connector"`
+	AccountID string `db:"account_id"`
+	Metadata  string `db:"metadata"`
+	CreatedAt string `db:"created_at"`
+	Success   bool   `db:"success"`
+}

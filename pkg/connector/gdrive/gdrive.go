@@ -24,7 +24,7 @@ type Options struct {
 	CredentialsFile string `json:"credentials_file"`
 }
 
-func (s *GDriveConnector) Sync(options string, cb connector.CallbackHandler) error {
+func (s *GDriveConnector) Sync(options string, cb connector.CallbackInterface) (string, error) {
 
 	var opts Options
 
@@ -50,7 +50,7 @@ func (s *GDriveConnector) Sync(options string, cb connector.CallbackHandler) err
 		resp, err := req.Do()
 		if err != nil {
 			log.Fatalf("Unable to retrieve files: %v", err)
-			return nil
+			return fmt.Sprintf("{\"message\":\"%v\"}", err), err
 		}
 
 		res := []*proto.DataObject{}
@@ -71,14 +71,14 @@ func (s *GDriveConnector) Sync(options string, cb connector.CallbackHandler) err
 				Metadata:     fmt.Sprintf(`{"last_modified": "%s"}`, lastModified)})
 		}
 		// Ignore proto.Empty, error response
-		_, _ = cb.Callback(&proto.SyncResponse{Response: res})
+		_ = cb.Callback(&proto.SyncResponse{Response: res})
 		pageToken = resp.NextPageToken
 		if resp.NextPageToken == "" {
 			break
 		}
 	}
 
-	return nil
+	return fmt.Sprintf("{\"message\":\"success\"}"), nil
 }
 
 var handshakeConfig = plugin.HandshakeConfig{

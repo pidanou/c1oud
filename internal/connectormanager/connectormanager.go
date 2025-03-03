@@ -174,7 +174,7 @@ func (p *ConnectorManager) DeleteAccount(id int32) error {
 	return p.ConnectorRepository.DeleteAccount(id)
 }
 
-func (p *ConnectorManager) ListData(filters *types.Filter) ([]connector.Data, int, error) {
+func (p *ConnectorManager) ListData(filters *types.DataFilter) ([]connector.Data, int, error) {
 	return p.ConnectorRepository.ListData(filters)
 }
 
@@ -184,4 +184,8 @@ func (p *ConnectorManager) GetData(id int32) (*connector.Data, error) {
 
 func (p *ConnectorManager) EditData(data *connector.Data) (*connector.Data, error) {
 	return p.ConnectorRepository.EditData(data)
+}
+
+func (p *ConnectorManager) AddSyncInfo(syncInfo *connector.SyncInfo) error {
+	return p.ConnectorRepository.AddSyncInfo(syncInfo)
 }

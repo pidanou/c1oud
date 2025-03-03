@@ -17,11 +17,11 @@ import (
 
 // Plugins need to implement this interface
 type ConnectorInterface interface {
-	Sync(options string, c CallbackHandler) error
+	Sync(options string, c CallbackInterface) (metadata string, err error)
 }
 
-type CallbackHandler interface {
-	Callback(*proto.SyncResponse) (*proto.Empty, error)
+type CallbackInterface interface {
+	Callback(*proto.SyncResponse) error
 }
 
 // GRPC Client: started by go-plugin to call RPC methods
@@ -31,7 +31,7 @@ type GRPCConnectorClient struct {
 }
 
 // Implementation of the Connector interface: the client calls this function that is sent to the GRPC server (the plugin).
-func (g *GRPCConnectorClient) Sync(options string, c CallbackHandler) error {
+func (g *GRPCConnectorClient) Sync(options string, c CallbackInterface) (string, error) {
 	callbackHandlerServer := &GRPCCallbackHandlerServer{Impl: c}
 	var s *grpc.Server
 	serverFunc := func(opts []grpc.ServerOption) *grpc.Server {
@@ -43,11 +43,11 @@ func (g *GRPCConnectorClient) Sync(options string, c CallbackHandler) error {
 
 	brokerID := g.broker.NextId()
 	go g.broker.AcceptAndServe(brokerID, serverFunc)
-	_, err := g.client.Sync(context.Background(), &proto.SyncRequest{
+	res, err := g.client.Sync(context.Background(), &proto.SyncRequest{
 		Options:               options,
 		CallbackHandlerServer: brokerID,
 	})
-	return err
+	return res.Metadata, err
 }
 
 // GRPC Server: started by go-plugin to listen to client RPC calls for the plugin
@@ -59,14 +59,15 @@ type ConnectorGRPCServer struct {
 
 // Implementation of the Connector interface: the servers calls the plugin implementation of the function
 func (s *ConnectorGRPCServer) Sync(ctx context.Context,
-	req *proto.SyncRequest) (*proto.Empty, error) {
+	req *proto.SyncRequest) (*proto.EndSync, error) {
 	conn, err := s.broker.Dial(req.CallbackHandlerServer)
 	if err != nil {
-		return &proto.Empty{}, err
+		return &proto.EndSync{}, err
 	}
 	defer conn.Close()
 	c := &GRPCCallbackHandlerClient{proto.NewCallbackHandlerClient(conn)}
-	return &proto.Empty{}, s.Impl.Sync(req.Options, c)
+	metadata, err := s.Impl.Sync(req.Options, c)
+	return &proto.EndSync{Metadata: metadata}, err
 }
 
 // Connector plugin over GRPC
@@ -89,19 +90,20 @@ func (ConnectorGRPCPlugin) GRPCClient(ctx context.Context, broker *plugin.GRPCBr
 // GRPC client/server to handle the data response
 type GRPCCallbackHandlerClient struct{ client proto.CallbackHandlerClient }
 
-func (m *GRPCCallbackHandlerClient) Callback(res *proto.SyncResponse) (*proto.Empty, error) {
+func (m *GRPCCallbackHandlerClient) Callback(res *proto.SyncResponse) error {
 	_, err := m.client.Callback(context.Background(), res)
 	if err != nil {
-		return &proto.Empty{}, err
+		return err
 	}
-	return &proto.Empty{}, nil
+	return nil
 }
 
 type GRPCCallbackHandlerServer struct {
 	proto.UnimplementedCallbackHandlerServer
-	Impl CallbackHandler
+	Impl CallbackInterface
 }
 
 func (m *GRPCCallbackHandlerServer) Callback(ctx context.Context, req *proto.SyncResponse) (*proto.Empty, error) {
-	return m.Impl.Callback(req)
+	err := m.Impl.Callback(req)
+	return &proto.Empty{}, err
 }

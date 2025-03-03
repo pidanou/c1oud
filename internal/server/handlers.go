@@ -38,7 +38,7 @@ func Render(ctx echo.Context, statusCode int, t ...templ.Component) error {
 }
 
 func (h *Handler) GetDataPage(c echo.Context) error {
-	filter := &types.Filter{}
+	filter := &types.DataFilter{}
 	c.Bind(filter)
 	page := filter.Page
 	if page == 0 {
@@ -71,7 +71,7 @@ func (h *Handler) GetDataPage(c echo.Context) error {
 }
 
 func (h *Handler) GetData(c echo.Context) error {
-	filter := &types.Filter{}
+	filter := &types.DataFilter{}
 	c.Bind(filter)
 	page := filter.Page
 	if page == 0 {

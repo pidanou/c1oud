@@ -25,3 +25,12 @@ CREATE TABLE data (
   notes TEXT NOT NULL DEFAULT '',
   UNIQUE (account_id, remote_id)
 );
+
+CREATE TABLE sync_info (
+  id SERIAL PRIMARY KEY,
+  connector TEXT NOT NULL REFERENCES connectors (name) ON DELETE CASCADE,
+  account_id INTEGER NOT NULL REFERENCES accounts (id) ON DELETE CASCADE,
+  metadata TEXT NOT NULL DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT now(),
+  success BOOLEAN NOT NULL DEFAULT TRUE
+)

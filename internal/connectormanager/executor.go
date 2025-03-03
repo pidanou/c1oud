@@ -35,8 +35,18 @@ func (p *ConnectorManager) Execute(accountIDs []int32) error {
 		wg.Add(1)
 		go func(id int32) {
 			defer wg.Done()
-			result := p.sync(id)
-			results <- result
+			account, err := p.ConnectorRepository.GetAccount(accountID)
+			if err != nil {
+				return
+			}
+			metadata, err := p.sync(id)
+			results <- err
+			syncInfo := &connector.SyncInfo{
+				Connector: account.Connector,
+				Metadata:  metadata,
+				Success:   err == nil,
+			}
+			_ = p.ConnectorRepository.AddSyncInfo(syncInfo)
 		}(accountID)
 	}
 	go func() {
@@ -60,7 +70,7 @@ func (p *ConnectorManager) Execute(accountIDs []int32) error {
 	return nil
 }
 
-func (p *ConnectorManager) sync(accountID int32) error {
+func (p *ConnectorManager) sync(accountID int32) (string, error) {
 	logger := hclog.New(&hclog.LoggerOptions{
 		Name:   "connector",
 		Output: os.Stdout,
@@ -69,12 +79,15 @@ func (p *ConnectorManager) sync(accountID int32) error {
 
 	acc, err := p.GetAccount(accountID)
 	if err != nil {
-		return err
+		return "An error occured before synchronization", err
 	}
 	pl, _ := p.ConnectorRepository.GetConnector(acc.Connector)
 	cmd := exec.Command("sh", "-c", pl.Command)
 	cmd.Dir = path.Join(constants.Envs["C1_DIR"], pl.Name)
 	client := plugin.NewClient(&plugin.ClientConfig{
+		UnixSocketConfig: &plugin.UnixSocketConfig{
+			TempDir: "/Users/pidanou/.c1/tmp",
+		},
 		HandshakeConfig: handshakeConfig,
 		Plugins:         pluginMap,
 		Cmd:             cmd,
@@ -89,21 +102,18 @@ func (p *ConnectorManager) sync(accountID int32) error {
 		log.Println("cannot get client ", err)
 	}
 	if gRPCClient == nil {
-		return errors.New("no connector client")
+		return "An error occured before synchronization", errors.New("no connector client")
 	}
 
 	raw, err := gRPCClient.Dispense("connector")
 	if err != nil {
 		log.Println(err)
+		return "An error occured before synchronization", err
 	}
 
 	conn := raw.(connector.ConnectorInterface)
-	err = conn.Sync(acc.Options, &callbackHandler{AccountID: acc.ID, Connector: pl.Name, DataRepository: p.ConnectorRepository})
-	if err != nil {
-		return err
-	}
-
-	return nil
+	metadata, err := conn.Sync(acc.Options, &callbackHandler{AccountID: acc.ID, Connector: pl.Name, DataRepository: p.ConnectorRepository})
+	return metadata, err
 }
 
 type callbackHandler struct {
@@ -112,7 +122,7 @@ type callbackHandler struct {
 	DataRepository repositories.ConnectorRepository
 }
 
-func (c *callbackHandler) Callback(res *proto.SyncResponse) (*proto.Empty, error) {
+func (c *callbackHandler) Callback(res *proto.SyncResponse) error {
 	data := []connector.Data{}
 	for _, obj := range res.Response {
 		d := connector.Data{AccountID: c.AccountID, RemoteID: obj.RemoteId, Connector: c.Connector, ResourceName: obj.ResourceName, URI: obj.Uri, Metadata: obj.Metadata}
@@ -122,5 +132,5 @@ func (c *callbackHandler) Callback(res *proto.SyncResponse) (*proto.Empty, error
 	if err != nil {
 		log.Println("err", err)
 	}
-	return &proto.Empty{}, err
+	return err
 }
